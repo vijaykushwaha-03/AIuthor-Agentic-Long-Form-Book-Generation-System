@@ -91,3 +91,13 @@ This file documents all non-obvious engineering choices made during the AIuthor 
 **Decision**: All agent logic, memory, RAG, evals, and exports are implemented and tested before the React UI is built.
 
 **Rationale**: The primary assessment value is in the agent graph, memory schema, prompt dossier, traceability, evals, and self-healing logic. The UI is a demonstration layer. Building the backend first means the UI has real APIs to connect to and does not require any mock data.
+
+---
+
+## DEC-011: pgvector Setup Postponed to Module 6
+
+**Decision**: pgvector setup and any vector column declarations are postponed to Module 6 (RAG pipeline).
+
+**Rationale**: Current Module 2.1 only prepares the relational database migration system and base model configuration. Postponing pgvector installation means local database setup can move forward immediately without blocking on pgvector extension configuration or native PostgreSQL library additions.
+
+**Impact**: Relational model design and general observability logging can be implemented and tested immediately using standard Postgres, without requiring the pgvector extension to be pre-installed on the host database.
