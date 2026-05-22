@@ -1,0 +1,56 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Git line ending normalization
+# Ensures consistent LF line endings in the repo regardless of OS
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Default: normalize all text files to LF in repo, use OS endings on checkout
+* text=auto eol=lf
+
+# Python source — always LF
+*.py text eol=lf
+*.pyi text eol=lf
+
+# Config & markup files — always LF
+*.md text eol=lf
+*.txt text eol=lf
+*.toml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.env text eol=lf
+*.env.example text eol=lf
+*.gitignore text eol=lf
+*.gitattributes text eol=lf
+*.cfg text eol=lf
+*.ini text eol=lf
+
+# Shell scripts — always LF
+*.sh text eol=lf
+Makefile text eol=lf
+
+# Dockerfile — always LF
+Dockerfile text eol=lf
+
+# SQL — always LF
+*.sql text eol=lf
+
+# Frontend (added later)
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+
+# Binary files — do not touch line endings
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.zip binary
+*.tar.gz binary
+*.whl binary

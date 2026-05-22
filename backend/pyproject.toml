@@ -1,0 +1,23 @@
+[tool.pytest.ini_options]
+# Run from the backend/ directory: pytest tests/ -v
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Show extra summary info for failures and errors
+addopts = "-v --tb=short -ra"
+
+# Filter out known benign warnings
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["tests/*", "*/__init__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

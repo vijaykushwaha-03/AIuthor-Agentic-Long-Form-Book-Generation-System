@@ -1,0 +1,117 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AIuthor — .gitignore
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.env.bak
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+wheels/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.lcov
+
+# mypy / type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+.pyre/
+
+# ── Environment & Secrets ─────────────────────────────────────────────────────
+# NEVER commit real credentials
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# ── Database ──────────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# Alembic compiled files (keep migrations source, ignore compiled)
+# backend/alembic/versions/__pycache__/
+
+# ── Node / Frontend (React + Vite — Module UI) ────────────────────────────────
+node_modules/
+dist/
+.vite/
+frontend/dist/
+frontend/node_modules/
+*.local
+
+# ── IDE & Editor ──────────────────────────────────────────────────────────────
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Keep .vscode extensions and workspace recommendations
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+*.out
+
+# ── Generated Exports (book outputs — too large for git) ─────────────────────
+runs/
+exports/
+*.docx
+*.pdf
+# Keep reference PDFs in root (assessment docs)
+!AIuthor_AI_Engineer_Assessment_2pager_v1.1.pdf
+!AIuthor_Antigravity_Implementation_Plan.pdf
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# Keep docker-compose.yml in source control
+# Ignore local overrides
+docker-compose.override.yml
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.bak
+*.tmp
+*.temp
+.cache/
+tmp/
+temp/
