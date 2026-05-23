@@ -86,24 +86,34 @@ def test_check_db_script_table_list_matches():
 
 
 def test_no_vector_or_pgvector_extensions_and_tables():
-    """Verify no vector or pgvector tables or extensions are registered or referenced yet."""
-    # Check that no table containing 'vector' or 'pgvector' exists in the metadata
+    """Verify no custom vector or pgvector table NAMES exist (the column type is fine, but not a whole table)."""
+    # Check that no TABLE NAMED 'vector' or 'pgvector' exists in the metadata.
+    # (The embedding column on document_chunks is expected from Module 6.0B.)
     for table_name in Base.metadata.tables:
-        assert "vector" not in table_name, f"Forbidden table name '{table_name}' containing 'vector' found"
-        assert "pgvector" not in table_name, f"Forbidden table name '{table_name}' containing 'pgvector' found"
+        assert table_name not in ("vector", "pgvector"), (
+            f"Unexpected standalone table '{table_name}' "
+            "pgvector data lives in document_chunks.embedding, not a separate table."
+        )
 
 
-def test_document_chunks_has_no_vector_column():
-    """Verify that document_chunks does not have any embedding/vector columns yet (postponed to Module 6)."""
+def test_document_chunks_has_vector_embedding_column():
+    """
+    Module 6.0B added vector storage columns to document_chunks.
+    Verify the expected columns exist.
+    """
     table = Base.metadata.tables.get("document_chunks")
     assert table is not None, "document_chunks table not found in metadata"
-    
-    # Assert there is no 'embedding' or 'vector' column
+
     column_names = {col.name for col in table.columns}
-    assert "embedding" not in column_names, "Forbidden 'embedding' column found in document_chunks table"
-    assert "vector" not in column_names, "Forbidden 'vector' column found in document_chunks table"
-    
-    # Confirm types of all columns to make sure none are vector or custom vector types
-    for col in table.columns:
-        type_str = str(col.type).lower()
-        assert "vector" not in type_str, f"Forbidden vector type detected on column {col.name}: {col.type}"
+    # These five columns must now exist:
+    assert "embedding" in column_names, "Module 6.0B: embedding column not found"
+    assert "embedding_provider" in column_names, "Module 6.0B: embedding_provider column not found"
+    assert "embedding_dimensions" in column_names, "Module 6.0B: embedding_dimensions column not found"
+    assert "embedding_created_at" in column_names, "Module 6.0B: embedding_created_at column not found"
+    assert "embedding_error" in column_names, "Module 6.0B: embedding_error column not found"
+
+    # Response schemas must NOT expose the raw vector:
+    from app.schemas.rag import DocumentChunkResponse
+    assert "embedding" not in DocumentChunkResponse.model_fields, (
+        "DocumentChunkResponse must not expose raw embedding vectors."
+    )

@@ -210,3 +210,187 @@ class RetrievalResponse(BaseSchema):
     total_results: int = Field(..., ge=0)
     status: str
     message: str | None = None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Module 6.0B: Chunk Embedding Schemas
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ChunkEmbeddingRequest(BaseSchema):
+    """Request schema to embed a single DocumentChunk."""
+    provider: str | None = None
+    force: bool = False
+
+
+class ChunkEmbeddingResponse(BaseSchema):
+    """Response returned after embedding a single chunk."""
+    chunk_id: Any  # UUID — kept as Any to avoid import of uuid for JSON compat
+    embedding_status: str
+    embedding_provider: str | None = None
+    embedding_model: str | None = None
+    embedding_dimensions: int | None = None
+    message: str
+
+
+class BulkChunkEmbeddingRequest(BaseSchema):
+    """Request schema for bulk-embedding chunks on a document or book."""
+    provider: str | None = None
+    force: bool = False
+    batch_size: int | None = Field(None, ge=1, le=256)
+    limit: int | None = Field(None, gt=0)
+
+
+class BulkChunkEmbeddingResponse(BaseSchema):
+    """Result of a bulk chunk embedding operation."""
+    target_type: str            # "document" or "book"
+    target_id: Any              # UUID
+    total_candidates: int
+    embedded_count: int
+    skipped_count: int
+    failed_count: int
+    provider: str
+    model: str
+    dimensions: int
+    status: str
+    errors: list[dict] = Field(default_factory=list)
+
+
+class SemanticRetrievalRequest(BaseSchema):
+    """Request schema for semantic (vector) retrieval."""
+    query: str = Field(..., min_length=1, max_length=2000)
+    book_id: Any | None = None          # UUID | None
+    document_id: Any | None = None      # UUID | None
+    top_k: int = Field(5, ge=1, le=20)
+    provider: str | None = None
+    include_raw_text: bool = True
+
+    @field_validator("query", mode="before")
+    @classmethod
+    def strip_whitespace(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
+
+class SemanticRetrievalResponse(BaseSchema):
+    """Response from semantic vector retrieval."""
+    query: str
+    provider: str
+    model: str
+    dimensions: int
+    results: list[RetrievalResultItem]
+    retrieval_mode: str = "semantic"
+    pgvector_used: bool = False
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Module 6.1: Hybrid Retrieval & Context Pack Schemas
+# ─────────────────────────────────────────────────────────────────────────────
+
+class HybridRetrievalRequest(BaseSchema):
+    """
+    Input schema to query the hybrid retriever.
+    """
+    query: str = Field(..., min_length=1, max_length=2000)
+    book_id: UUID | None = None
+    document_id: UUID | None = None
+    top_k: int = Field(8, ge=1, le=30)
+    semantic_weight: float = Field(0.7, ge=0.0, le=1.0)
+    lexical_weight: float = Field(0.3, ge=0.0, le=1.0)
+    provider: str | None = None
+    include_raw_text: bool = True
+    min_score: float | None = Field(None, ge=0.0, le=1.0)
+
+    @field_validator("query", mode="before")
+    @classmethod
+    def strip_whitespace(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
+    @model_validator(mode="after")
+    def validate_weights(self) -> HybridRetrievalRequest:
+        if self.semantic_weight + self.lexical_weight <= 0.0:
+            raise ValueError("semantic_weight + lexical_weight must be greater than 0")
+        return self
+
+
+class ContextPackRequest(BaseSchema):
+    """
+    Request schema to build a RAG context pack.
+    """
+    query: str = Field(..., min_length=1, max_length=2000)
+    book_id: UUID
+    chapter_id: UUID | None = None
+    document_id: UUID | None = None
+    max_chunks: int = Field(10, ge=1, le=30)
+    max_context_chars: int = Field(12000, ge=1000, le=50000)
+    provider: str | None = None
+    include_sources: bool = True
+    include_memory_hints: bool = False
+
+    @field_validator("query", mode="before")
+    @classmethod
+    def strip_whitespace(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
+
+class CitationItem(BaseSchema):
+    """
+    Represents a citation for a retrieved chunk.
+    """
+    citation_id: str
+    document_id: UUID
+    chunk_id: UUID
+    source_title: str | None = None
+    source_type: str | None = None
+    source_url: str | None = None
+    chunk_index: int
+    score: float | None = None
+    retrieval_mode: str
+    metadata: dict | None = None
+
+
+class ContextChunk(BaseSchema):
+    """
+    A chunk formatted for context packaging.
+    """
+    citation_id: str
+    chunk_id: UUID
+    document_id: UUID
+    text: str
+    score: float | None = None
+    retrieval_mode: str
+    token_count: int | None = None
+    metadata: dict | None = None
+
+
+class HybridRetrievalResponse(BaseSchema):
+    """
+    Response schema returning hybrid retrieval matches and citation items.
+    """
+    query: str
+    results: list[RetrievalResultItem]
+    citations: list[CitationItem]
+    retrieval_mode: str = "hybrid"
+    semantic_count: int = 0
+    lexical_count: int = 0
+    merged_count: int = 0
+
+
+class ContextPackResponse(BaseSchema):
+    """
+    Response schema returning structured context block for agent ingestion.
+    """
+    query: str
+    book_id: UUID
+    chapter_id: UUID | None = None
+    context_text: str
+    chunks: list[ContextChunk]
+    citations: list[CitationItem]
+    total_chunks: int
+    total_context_chars: int
+    retrieval_mode: str = "hybrid_context_pack"
+    metadata: dict | None = None

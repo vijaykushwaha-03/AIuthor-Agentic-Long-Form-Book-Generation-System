@@ -19,6 +19,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routes_health import router as health_router
+from app.api.routes_books import router as books_router
+from app.api.routes_runs import router as runs_router
+from app.api.routes_chapters import router as chapters_router
+from app.api.routes_sections import router as sections_router
+from app.api.routes_rag import router as rag_router
+from app.api.routes_memory import router as memory_router
+from app.api.routes_observability import router as observability_router
+from app.api.routes_eval_export import router as eval_export_router
+from app.api.routes_llm import router as llm_router
+from app.api.routes_embeddings import router as embeddings_router
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -102,6 +112,20 @@ def create_app() -> FastAPI:
 
     # ── Routers ──────────────────────────────────────────────────────────────
     app.include_router(health_router)
+    app.include_router(books_router)
+    app.include_router(runs_router)
+    app.include_router(chapters_router)
+    app.include_router(sections_router)
+    app.include_router(rag_router)
+    app.include_router(memory_router)
+    app.include_router(observability_router)
+    app.include_router(eval_export_router)
+    app.include_router(llm_router)
+    app.include_router(embeddings_router)
+
+    # ── Admin Dashboard ──────────────────────────────────────────────────────
+    from app.admin import setup_admin
+    setup_admin(app)
 
     return app
 

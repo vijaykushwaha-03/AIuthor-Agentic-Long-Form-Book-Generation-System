@@ -21,12 +21,28 @@ os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["ALLOWED_ORIGINS"] = "http://localhost:5173"
 os.environ["SECRET_KEY"] = "test-secret-key-not-for-production"
 os.environ["LOG_LEVEL"] = "WARNING"
+# LLM: always use mock in tests — no real API keys required
+os.environ["LLM_PROVIDER"] = "mock"
+os.environ.setdefault("GEMINI_API_KEY", "")
+os.environ.setdefault("OPENAI_API_KEY", "")
+# Embeddings: always use mock in tests — no real API keys required
+os.environ["EMBEDDING_PROVIDER"] = "mock"
+os.environ.setdefault("GEMINI_EMBEDDING_MODEL", "text-embedding-004")
+os.environ.setdefault("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+os.environ.setdefault("EMBEDDING_DIMENSIONS", "8")
+os.environ.setdefault("EMBEDDING_BATCH_SIZE", "32")
+# RAG vector storage must match mock embedding dimensions in tests
+os.environ["RAG_VECTOR_DIMENSIONS"] = "8"
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+# Import Base + all models so metadata is populated before create_all
+from app.database import Base
+import app.models  # noqa: F401 — registers all ORM models on Base.metadata
 
 
 # ── In-memory SQLite engine for tests ────────────────────────────────────────
@@ -43,6 +59,9 @@ TestSessionLocal = sessionmaker(
     autoflush=False,
     bind=_test_engine,
 )
+
+# Create all tables in the in-memory SQLite DB so API route tests can write data
+Base.metadata.create_all(bind=_test_engine)
 
 
 def override_get_db():
@@ -93,3 +112,22 @@ def client(app):
     """
     with TestClient(app, raise_server_exceptions=False) as c:
         yield c
+
+
+@pytest.fixture()
+def db():
+    """
+    Function-scoped SQLAlchemy Session fixture for direct service-layer tests.
+
+    Provides a fresh session from the in-memory SQLite test engine.
+    Rolls back after every test to keep tests isolated.
+    """
+    connection = _test_engine.connect()
+    transaction = connection.begin()
+    session = TestSessionLocal(bind=connection)
+    try:
+        yield session
+    finally:
+        session.close()
+        transaction.rollback()
+        connection.close()

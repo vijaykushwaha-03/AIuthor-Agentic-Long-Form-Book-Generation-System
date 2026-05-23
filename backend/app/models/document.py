@@ -1,8 +1,9 @@
 from __future__ import annotations
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING, Any, Optional
 
-from sqlalchemy import ForeignKey, JSON, String, Text, Integer, Index, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, JSON, String, Text, Integer, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -10,6 +11,14 @@ from app.models.base import GUID, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
     from app.models.book import BookProject
+
+from pgvector.sqlalchemy import Vector as PgVector
+
+# Dimensions used for stored RAG vectors.
+# Must match settings.RAG_VECTOR_DIMENSIONS (default 768).
+_RAG_VECTOR_DIMENSIONS = 768
+
+_VECTOR_TYPE = PgVector(_RAG_VECTOR_DIMENSIONS).with_variant(JSON, "sqlite")
 
 
 class SourceDocument(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -48,7 +57,7 @@ class SourceDocument(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
 
 class DocumentChunk(UUIDPrimaryKeyMixin, TimestampMixin, Base):
-    """Stores text chunks generated from source documents."""
+    """Stores text chunks generated from source documents, including optional vector embeddings."""
 
     __tablename__ = "document_chunks"
 
@@ -72,6 +81,21 @@ class DocumentChunk(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     embedding_status: Mapped[str] = mapped_column(
         String(50), nullable=False, default="pending", index=True
     )
+
+    # ── Vector Embedding Fields (Module 6.0B) ─────────────────────────────────
+    # embedding: stored as pgvector Vector(768) on PostgreSQL,
+    #            stored as JSON list on SQLite (test fallback).
+    #            Response schemas do NOT expose this field.
+    embedding: Mapped[Optional[Any]] = mapped_column(
+        _VECTOR_TYPE,
+        nullable=True,
+    )
+    embedding_provider: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    embedding_dimensions: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    embedding_created_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    embedding_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships
     document: Mapped[SourceDocument] = relationship("SourceDocument", back_populates="chunks")
