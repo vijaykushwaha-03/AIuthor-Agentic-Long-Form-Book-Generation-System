@@ -180,6 +180,14 @@ class Settings(BaseSettings):
         default=False,
         description="Whether to fall back to Python cosine ranking on PostgreSQL if pgvector is missing.",
     )
+    enable_real_agent_test_api: bool = Field(
+        default=False,
+        description="Whether to enable the dev-only real agent execution endpoint.",
+    )
+    enable_real_workflow_test_api: bool = Field(
+        default=False,
+        description="Whether to enable the dev-only real LangGraph workflow execution endpoint.",
+    )
 
 
 @lru_cache(maxsize=1)

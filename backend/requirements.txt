@@ -36,3 +36,6 @@ openai==1.30.3
 
 # Vector storage (Module 6.0A)
 pgvector==0.3.2
+
+# Workflow orchestration (Module 7.1A)
+langgraph==1.2.1

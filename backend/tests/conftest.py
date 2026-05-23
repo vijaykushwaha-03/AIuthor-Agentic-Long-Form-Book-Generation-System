@@ -18,6 +18,8 @@ import os
 os.environ["APP_ENV"] = "test"
 os.environ["APP_VERSION"] = "0.1.0"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ["ENABLE_REAL_AGENT_TEST_API"] = "false"
+os.environ["ENABLE_REAL_WORKFLOW_TEST_API"] = "false"
 os.environ["ALLOWED_ORIGINS"] = "http://localhost:5173"
 os.environ["SECRET_KEY"] = "test-secret-key-not-for-production"
 os.environ["LOG_LEVEL"] = "WARNING"

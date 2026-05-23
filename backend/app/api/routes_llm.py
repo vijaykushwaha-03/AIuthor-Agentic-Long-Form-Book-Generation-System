@@ -77,15 +77,15 @@ def get_provider_info() -> LLMProviderInfo:
     status_code=status.HTTP_200_OK,
     summary="Mock LLM generation (test only)",
     description=(
-        "Always uses MockLLMProvider regardless of the configured LLM_PROVIDER. "
-        "Returns a deterministic response derived from the last user message. "
-        "Use this endpoint to validate the API contract without any real API calls."
+        "Uses the configured LLM_PROVIDER (Gemini/OpenAI or Mock fallback) "
+        "to generate text. Convenient for testing connection to real providers."
     ),
 )
 def mock_generate(request: LLMRequest) -> LLMResponse:
-    """Run generation through MockLLMProvider only. Never calls Gemini or OpenAI."""
+    """Run generation through the configured LLM provider."""
     try:
-        service = LLMService(provider=MockLLMProvider())
+        provider = get_llm_provider()
+        service = LLMService(provider=provider)
         return service.generate_text(request)
     except LLMConfigurationError as exc:
         logger.error("LLM configuration error: %s", exc.message)

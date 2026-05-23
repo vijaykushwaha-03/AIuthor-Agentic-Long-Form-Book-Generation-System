@@ -78,20 +78,17 @@ def get_provider_info() -> EmbeddingProviderInfo:
     status_code=status.HTTP_200_OK,
     summary="Mock embedding generation (test only)",
     description=(
-        "Always uses MockEmbeddingProvider regardless of the configured EMBEDDING_PROVIDER. "
-        "Returns deterministic hash-based vectors. "
-        "Use this endpoint to validate the API contract without any real API calls."
+        "Uses the configured EMBEDDING_PROVIDER (Gemini/OpenAI or Mock fallback) "
+        "to generate embeddings. Convenient for testing connection to real providers."
     ),
 )
 def mock_embed(request: EmbeddingRequest) -> EmbeddingResponse:
-    """Run embedding through MockEmbeddingProvider only. Never calls Gemini or OpenAI."""
-    from app.config import get_settings
-    settings = get_settings()
+    """Run embedding through the configured embedding provider."""
+    from app.embeddings.factory import get_embedding_provider
 
     try:
-        service = EmbeddingService(
-            provider=MockEmbeddingProvider(dims=settings.EMBEDDING_DIMENSIONS)
-        )
+        provider = get_embedding_provider()
+        service = EmbeddingService(provider=provider)
         return service.embed_texts(request)
     except EmbeddingConfigurationError as exc:
         logger.error("Embedding configuration error: %s", exc.message)

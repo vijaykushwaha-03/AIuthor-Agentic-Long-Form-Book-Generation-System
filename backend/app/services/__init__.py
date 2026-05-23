@@ -26,6 +26,9 @@ from app.services.chunk_embedding_service import ChunkEmbeddingService
 from app.services.semantic_retrieval_service import SemanticRetrievalService
 from app.services.hybrid_retrieval_service import HybridRetrievalService
 from app.services.context_pack_service import ContextPackService
+from app.services.agent_execution_service import AgentExecutionService
+from app.services.workflow_execution_service import WorkflowExecutionService
+from app.services.workflow_observability_service import WorkflowObservabilityService
 
 __all__ = [
     "ServiceError",
@@ -48,6 +51,9 @@ __all__ = [
     "SemanticRetrievalService",
     "HybridRetrievalService",
     "ContextPackService",
+    "AgentExecutionService",
+    "WorkflowExecutionService",
+    "WorkflowObservabilityService",
 ]
 
 

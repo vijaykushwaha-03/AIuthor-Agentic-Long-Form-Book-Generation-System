@@ -121,12 +121,31 @@ Reviews qualitative validation scores and coordinates generated file outputs.
 
 ---
 
+## 10. Agent Execution & Dev-Test Endpoints
+Manages agent capability registry queries, local prompt rendering, offline mock executions, and local dev-only manual LLM testing.
+* **GET** `/api/agents` — List all registered pipeline agents.
+* **GET** `/api/agents/{agent_name}` — Get metadata and prompt template for a single agent.
+* **POST** `/api/agents/render-prompt` — Locally render template prompts without calling LLM providers.
+* **POST** `/api/agents/mock-run` — Offline mock agent run with deterministic responses.
+* **POST** `/api/agents/dev-run-real` — Dev-only single agent run against configured OpenAI/Gemini providers (disabled by default).
+
+---
+
+## 11. LangGraph Workflow Endpoints (Module 7.2A)
+Manages LangGraph pipeline registration, offline mock execution, dev-only real LLM workflow testing, and workflow execution trace/cost bundle persistence across multi-agent pipelines (`mini_book_pipeline` and `full_agent_pipeline`).
+* **GET** `/api/workflows` — List all registered LangGraph workflows with node metadata (exposes both 5-node and 8-node options).
+* **GET** `/api/workflows/{workflow_name}` — Get metadata, node list, and capabilities for a single workflow (supporting `mini_book_pipeline` and `full_agent_pipeline`).
+* **POST** `/api/workflows/mock-run` — Run the selected pipeline (`mini_book_pipeline` with 5 nodes or `full_agent_pipeline` with 8 nodes) using MockLLMProvider (offline, no API calls).
+* **POST** `/api/workflows/dev-run-real` — Dev-only pipeline run against real Gemini/OpenAI across all 5 or 8 nodes (disabled by default, requires ENABLE_REAL_WORKFLOW_TEST_API=true).
+* **POST** `/api/workflows/mock-run-traced` — Run mock workflow with persistent trace, prompt, and cost ledger logging in DB for all executed steps.
+* **POST** `/api/workflows/dev-run-real-traced` — Run real dev workflow with persistent trace, prompt, and cost ledger logging in DB (gated, requires ENABLE_REAL_WORKFLOW_TEST_API=true).
+* **GET** `/api/workflows/traces/{run_id}` — Retrieve complete consolidated agent trace, prompt log, and token cost ledger bundle for a run ID.
+
+---
+
 ## Not Implemented Yet (Postponed to Workflow Modules)
 The API layer operates purely as a database-driven CRUD and metadata management backend. The following runtime orchestrations and features will be implemented in subsequent agent/workflow phases:
-1. **Real Agent Workflow Execution**: Agents are mock components; no automated background generation exists yet.
-2. **LangGraph Orchestration**: The multi-agent workflow graph starts in Module 5.
-3. **Real Prompt Completions**: No LLM network calls are made; payload logs are saved as placeholders.
-4. **Real Semantic RAG**: Fully implemented using PostgreSQL 16 + pgvector (Module 6.0B) and Hybrid Retrieval + Context Pack (Module 6.1).
-5. **Real Evaluation Execution**: Evaluators only summarize recorded logs; no automated quality tests are run.
-6. **Real DOCX/PDF Generation**: Export request produces database records with `pending://` URIs; no physical file files are generated on disk.
-7. **React User Interface**: The UI resides in a separate client-side bundle.
+1. **Full Book Generation**: Background worker pipelines to generate complete books are not built yet.
+2. **Real Evaluation Execution**: Evaluators only summarize recorded logs; no automated quality tests are run.
+3. **Real DOCX/PDF Generation**: Export request produces database records with `pending://` URIs; no physical file files are generated on disk.
+4. **React User Interface**: The UI resides in a separate client-side bundle.

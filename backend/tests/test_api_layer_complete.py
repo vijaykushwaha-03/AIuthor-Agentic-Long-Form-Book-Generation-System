@@ -44,6 +44,8 @@ def test_all_expected_services_importable():
         ExportService,
         HybridRetrievalService,
         ContextPackService,
+        AgentExecutionService,
+        WorkflowExecutionService,
     )
 
     assert BookProjectService is not None
@@ -62,6 +64,8 @@ def test_all_expected_services_importable():
     assert ConflictError is not None
     assert HybridRetrievalService is not None
     assert ContextPackService is not None
+    assert AgentExecutionService is not None
+    assert WorkflowExecutionService is not None
 
 
 def test_openapi_schema_loads(client: TestClient):
@@ -148,6 +152,28 @@ def test_openapi_contains_eval_export_paths(client: TestClient):
     assert "/api/runs/{run_id}/exports" in paths
 
 
+def test_openapi_contains_agent_paths(client: TestClient):
+    """Verify OpenAPI schema registers agent endpoints."""
+    paths = client.get("/openapi.json").json()["paths"]
+    assert "/api/agents" in paths
+    assert "/api/agents/{agent_name}" in paths
+    assert "/api/agents/render-prompt" in paths
+    assert "/api/agents/mock-run" in paths
+    assert "/api/agents/dev-run-real" in paths
+
+
+def test_openapi_contains_workflow_paths(client: TestClient):
+    """Verify OpenAPI schema registers workflow endpoints (Module 7.1A & 7.1B)."""
+    paths = client.get("/openapi.json").json()["paths"]
+    assert "/api/workflows" in paths
+    assert "/api/workflows/{workflow_name}" in paths
+    assert "/api/workflows/mock-run" in paths
+    assert "/api/workflows/dev-run-real" in paths
+    assert "/api/workflows/mock-run-traced" in paths
+    assert "/api/workflows/dev-run-real-traced" in paths
+    assert "/api/workflows/traces/{run_id}" in paths
+
+
 def test_no_duplicate_route_method_pairs():
     """Verify that there are no duplicate path + method mapping combinations in the router."""
     routes_seen = set()
@@ -169,6 +195,14 @@ def test_static_routes_exist_separately_from_dynamic_routes(client: TestClient):
         "/api/books/{book_id}/sections/reorder",
         "/api/books/{book_id}/exports/request",
         "/api/books/{book_id}/exports/bundle",
+        "/api/agents/render-prompt",
+        "/api/agents/mock-run",
+        "/api/agents/dev-run-real",
+        "/api/workflows/mock-run",
+        "/api/workflows/dev-run-real",
+        "/api/workflows/mock-run-traced",
+        "/api/workflows/dev-run-real-traced",
+        "/api/workflows/traces/{run_id}",
     ]
     for p in static_paths:
         assert p in paths, f"Expected static path {p} not registered in OpenAPI"
@@ -203,3 +237,13 @@ def test_api_layer_does_not_require_pgvector():
     """Verify DB and routers run without vector modules (postponed in accordance with DEC-011)."""
     # Standard SQLite configuration will fail if postgres/pgvector is strictly required at compile/load time
     assert app.dependency_overrides is not None
+
+
+def test_workflow_registry_exposes_both_pipelines(client: TestClient):
+    """Verify workflow registry returns both mini_book_pipeline and full_agent_pipeline."""
+    resp = client.get("/api/workflows")
+    assert resp.status_code == 200
+    data = resp.json()
+    names = [w["workflow_name"] for w in data]
+    assert "mini_book_pipeline" in names
+    assert "full_agent_pipeline" in names

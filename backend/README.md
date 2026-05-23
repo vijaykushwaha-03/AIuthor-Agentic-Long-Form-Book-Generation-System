@@ -17,6 +17,80 @@ To check and verify the pgvector vector store readiness:
 
 ## Project Progress Status
 
+### ✅ Module 7.2A Completed: Full 8-Agent Workflow Skeleton
+- **Full 8-Agent compiled pipeline** (`full_agent_pipeline`): Integrated `humanizer`, `memory_keeper`, and `assembler` nodes sequentially into the compiled LangGraph workflow skeleton: `planner` → `researcher` → `writer` → `humanizer` → `editor` → `fact_checker` → `memory_keeper` → `assembler`.
+- **Enhanced schemas & validation**: Configured strict field validation for supported `workflow_name` values, raising standard 422 errors for unrecognized requests.
+- **Priority-based extraction**: Implemented advanced fallback rules for final content selection (`assembler_output` > `fact_checker_output` > `writer_output`).
+- **Observability extension**: Updated the execution service to record 8 step trace logs, prompt logs, and token cost records inside the database.
+- **Robust test suites**: Added 29 offline-only test cases verifying the compiled graph, multi-workflow service, and trace-persisting endpoints.
+
+### ✅ Module 7.1B Completed: Workflow Observability & Run Trace Persistence
+- **Workflow Observability Service** (`workflow_observability_service.py`) implemented, supporting agent execution trace persistence, prompt log recording, and token usage ledger tracking.
+- **Node Instrumentation**: All 5 LangGraph workflow nodes instrumentalized to pre-render system/user prompts, record execution time (`duration_ms`), and collect detailed output metadata.
+- **DB Persistence Resilience**: Isolation of observability database writes to ensure non-fatal failures (e.g. database locks) do not crash the workflow execution. Automatically provisions mock/development `BookProject` and `BookRun` rows if needed.
+- **Traced API Endpoints**:
+  - `POST /api/workflows/mock-run-traced` (Runs mock sequential pipeline with DB trace persistence)
+  - `POST /api/workflows/dev-run-real-traced` (Runs real live Gemini workflow with DB trace persistence, gated by `ENABLE_REAL_WORKFLOW_TEST_API=true`)
+  - `GET /api/workflows/traces/{run_id}` (Retrieves complete consolidated trace bundle)
+- **Documentation**: Added design docs to `docs/workflow_observability.md` and registered endpoints in `docs/api_contracts/api_inventory.md`.
+
+### ✅ Module 7.1A Completed: LangGraph Workflow Skeleton
+- **Workflow Package** (`app/workflows/`) added with schemas, exceptions, TypedDict state, node wrappers, and LangGraph `StateGraph` graph.
+- **`mini_book_pipeline`**: 5-node sequential pipeline — `planner → researcher → writer → editor → fact_checker` — fully compiled and invocable.
+- **`WorkflowExecutionService`** (`workflow_execution_service.py`) mirrors `AgentExecutionService` with mock and real_dev orchestration methods.
+- **Workflow API Routes** (`routes_workflows.py`) registered under `/api/workflows`:
+  - `GET /api/workflows` (List workflows)
+  - `GET /api/workflows/{workflow_name}` (Single workflow metadata)
+  - `POST /api/workflows/mock-run` (Offline 5-node mock execution, all agents use MockLLMProvider)
+  - `POST /api/workflows/dev-run-real` (Dev-only real Gemini/OpenAI workflow, disabled by default via `ENABLE_REAL_WORKFLOW_TEST_API=false`)
+- **LangGraph 1.2.1** added to `requirements.txt`.
+- **Documentation**: `docs/langgraph_workflow_skeleton.md` added; `docs/api_contracts/api_inventory.md` updated.
+- **Tests**: 55 new offline tests added across 3 files — all 838 tests pass.
+
+### ✅ Module 7.0B Completed: Agent Service & Routing Layer
+- **AgentExecutionService** (`agent_execution_service.py`) implemented, supporting metadata queries, local prompt rendering, offline mock executions, and local dev-only manual LLM testing.
+- **Agent API Routes** (`routes_agents.py`) registered and exposed under the `/api/agents` prefix:
+  - `GET /api/agents` (List agents)
+  - `GET /api/agents/{agent_name}` (Single agent metadata)
+  - `POST /api/agents/render-prompt` (Local template rendering)
+  - `POST /api/agents/mock-run` (Deterministic offline mock execution)
+  - `POST /api/agents/dev-run-real` (Dev-only manual LLM provider testing)
+- **Dev-Only Real LLM Safeguards**:
+  - Disabled by default. Returns `403 Forbidden` unless `ENABLE_REAL_AGENT_TEST_API=true` is set.
+  - Limits execution to single agent tasks (runs one selected agent once without LangGraph or full workflow orchestration).
+  - Ensures no background workers or database mutations are run.
+- **Offline Automated Verification**:
+  - Service tests (`test_agent_execution_service.py`) verify capabilities, offline rendering, and mock runs.
+  - Routing tests (`test_agents_api.py`) verify endpoints parsing, forbidden responses, and OpenAPI contracts.
+  - Complete integration of all paths into completeness check suite (`test_api_layer_complete.py`).
+- **Documentation**: Added design docs to `docs/agent_foundation.md` and registered endpoints in `docs/api_contracts/api_inventory.md`.
+- **Constraints Confirmed**:
+  - 🚫 Automated pytest suites run strictly offline without requiring any Gemini or OpenAI keys.
+  - 🚫 No LangGraph orchestrators or background book generators implemented yet.
+  - 🚫 No database migrations created.
+
+---
+
+### ✅ Module 7.0A Completed: Agent Foundation + Prompt Registry
+- **Agent Package Foundation** added under `app/agents/`, housing all core schemas, custom exception handling, abstract base agent definitions, and 8 concrete subclasses.
+- **Agent Schemas** (`schemas.py`) implemented for inputs, outputs, info descriptions, and prompt render models.
+- **Agent Exceptions** (`exceptions.py`) declared to capture agent-specific configuration, missing prompt, and LLM runtime execution errors.
+- **Prompt Templates** created under `prompts/agents/` for all 8 agent roles (Planner, Researcher, Writer, Humanizer, Editor, FactChecker, MemoryKeeper, Assembler), embodying custom role-based identity declarations.
+- **Prompt Registry** (`PromptRegistry`) implemented to load templates dynamically, extract prompt versions, and compile system/user prompts deterministically.
+- **Base Agent Class** (`BaseAgent`) built with abstract metadata properties, system/user message builders, LLM provider integration, and mock offline execution support.
+- **8 Core Agent Classes** implemented, inheriting from the base agent and configuring metadata tags and pack/memory dependency configurations.
+- **Agent Registry** (`registry.py`) and dynamic factory helpers (`list_agent_names`, `list_agent_info`, `get_agent`) registered.
+- **Full Offline Testing**: Added 26 tests across `test_agent_prompt_registry.py` and `test_agent_registry.py` verification suites (no external LLM networks requested).
+- **Constraints Confirmed**:
+  - 🚫 No API routes added yet.
+  - 🚫 No AgentExecutionService added yet.
+  - 🚫 No LangGraph or workflow engine added yet.
+  - 🚫 No real public generation endpoint exposed.
+  - 🚫 No database migrations created or models changed.
+  - 🚫 No external LLM key or call required.
+
+---
+
 ### ✅ Module 6.1 Completed: Hybrid Retrieval + Context Pack Builder
 - **Hybrid Retrieval Service** (`HybridRetrievalService`) added, combining case-insensitive lexical exact phrase/term-overlap matching and semantic vector similarity search.
 - **Context Pack Service** (`ContextPackService`) added, formatting hybrid RAG matches into stable, citation-annotated context blocks with size-boundary character limits and re-indexing.

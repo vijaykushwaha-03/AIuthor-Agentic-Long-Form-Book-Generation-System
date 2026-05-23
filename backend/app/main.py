@@ -29,6 +29,8 @@ from app.api.routes_observability import router as observability_router
 from app.api.routes_eval_export import router as eval_export_router
 from app.api.routes_llm import router as llm_router
 from app.api.routes_embeddings import router as embeddings_router
+from app.api.routes_agents import router as agents_router
+from app.api.routes_workflows import router as workflows_router
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -122,6 +124,8 @@ def create_app() -> FastAPI:
     app.include_router(eval_export_router)
     app.include_router(llm_router)
     app.include_router(embeddings_router)
+    app.include_router(agents_router)
+    app.include_router(workflows_router)
 
     # ── Admin Dashboard ──────────────────────────────────────────────────────
     from app.admin import setup_admin
