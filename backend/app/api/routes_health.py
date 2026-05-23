@@ -8,23 +8,12 @@ Decision DEC-005:
 from __future__ import annotations
 
 from fastapi import APIRouter
-from pydantic import BaseModel
 
 from app.config import get_settings
+from app.schemas import HealthResponse, VersionResponse
 
 router = APIRouter(tags=["health"])
 
-
-# ── Response schemas ──────────────────────────────────────────────────────────
-class HealthResponse(BaseModel):
-    status: str
-    env: str
-    version: str
-
-
-class VersionResponse(BaseModel):
-    version: str
-    service: str
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
