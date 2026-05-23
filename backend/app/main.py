@@ -1,14 +1,14 @@
-"""
-AIuthor Backend — FastAPI Application Factory.
+# """
+# AIuthor Backend — FastAPI Application Factory.
 
-Decision DEC-003: create_app() factory pattern for testability.
+# Decision DEC-003: create_app() factory pattern for testability.
 
-Usage:
-  # Development server (from backend/ directory)
-  uvicorn app.main:app --reload
+# Usage:
+#   # Development server (from backend/ directory)
+#   uvicorn app.main:app --reload
 
-  # Tests use create_app() directly via conftest.py
-"""
+#   # Tests use create_app() directly via conftest.py
+# """
 from __future__ import annotations
 
 import logging
@@ -31,9 +31,17 @@ from app.api.routes_llm import router as llm_router
 from app.api.routes_embeddings import router as embeddings_router
 from app.api.routes_agents import router as agents_router
 from app.api.routes_workflows import router as workflows_router
+from app.api.routes_bookrun_workflows import router as bookrun_workflows_router
+from app.api.routes_chapter_generation import router as chapter_generation_router
+from app.api.routes_chapter_self_healing import router as chapter_self_healing_router
+from app.api.routes_memory_extraction import router as memory_extraction_router
+from app.api.routes_book_exports import router as book_exports_router
+from app.api.routes_delivery_reports import router as delivery_reports_router
 from app.config import get_settings
 
+
 logger = logging.getLogger(__name__)
+
 
 
 # ── Lifespan (startup / shutdown) ─────────────────────────────────────────────
@@ -115,19 +123,28 @@ def create_app() -> FastAPI:
     # ── Routers ──────────────────────────────────────────────────────────────
     app.include_router(health_router)
     app.include_router(books_router)
+    app.include_router(delivery_reports_router)
     app.include_router(runs_router)
     app.include_router(chapters_router)
     app.include_router(sections_router)
     app.include_router(rag_router)
     app.include_router(memory_router)
     app.include_router(observability_router)
+    app.include_router(book_exports_router)
     app.include_router(eval_export_router)
     app.include_router(llm_router)
     app.include_router(embeddings_router)
     app.include_router(agents_router)
     app.include_router(workflows_router)
+    app.include_router(bookrun_workflows_router)
+    app.include_router(chapter_generation_router)
+    app.include_router(chapter_self_healing_router)
+    app.include_router(memory_extraction_router)
+
 
     # ── Admin Dashboard ──────────────────────────────────────────────────────
+
+
     from app.admin import setup_admin
     setup_admin(app)
 

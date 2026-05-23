@@ -188,6 +188,24 @@ class Settings(BaseSettings):
         default=False,
         description="Whether to enable the dev-only real LangGraph workflow execution endpoint.",
     )
+    enable_real_memory_test_api: bool = Field(
+        default=False,
+        description="Whether to enable the dev-only real memory extraction endpoint.",
+    )
+    export_output_dir: str = Field(
+        default="storage/exports",
+        description="Directory where export files are saved.",
+    )
+    enable_pdf_export: bool = Field(
+        default=True,
+        description="Whether to enable PDF export.",
+    )
+    delivery_output_dir: str = Field(
+        default="storage/delivery",
+        description="Directory where delivery bundles are saved.",
+    )
+
+
 
 
 @lru_cache(maxsize=1)

@@ -95,6 +95,11 @@ Keeps continuity across book outline, tone, and character lore through batch reg
 * **POST/GET/PATCH/DELETE** `/api/books/{book_id}/memory/tone-fingerprints` — Tone Fingerprints CRUD.
 * **POST/GET/PATCH/DELETE** `/api/books/{book_id}/memory/decisions` — Project Decisions CRUD.
 * **GET** `/api/memory/decisions` — List decisions globally.
+* **POST** `/api/books/{book_id}/memory/extract/mock-run` — Extract memories from text/outline offline (mock).
+* **POST** `/api/books/{book_id}/memory/extract/dev-run-real` — Extract memories via real Gemini/OpenAI MemoryKeeper (gated).
+* **POST** `/api/books/{book_id}/memory/extract/from-chapter/{chapter_id}/mock-run` — Extract memories from chapter text offline (mock).
+* **POST** `/api/books/{book_id}/memory/extract/from-chapter/{chapter_id}/dev-run-real` — Extract memories from chapter via real Gemini/OpenAI MemoryKeeper (gated).
+* **POST** `/api/books/{book_id}/memory/continuity-pack` — Compile stored lore/memory tables into a unified Continuity Pack text.
 
 ---
 
@@ -143,9 +148,52 @@ Manages LangGraph pipeline registration, offline mock execution, dev-only real L
 
 ---
 
+## 12. BookRun Workflow Endpoints (Module 8.0)
+Connects multi-agent sequential workflow execution with real database entities (BookProject, BookRun, and Chapter), supporting dynamic query context packing and runtime trace persistence.
+* **POST** `/api/books/{book_id}/workflow/mock-run` — Runs mock sequential workflow execution against real database records (offline, no live LLM hits).
+* **POST** `/api/books/{book_id}/workflow/dev-run-real` — Runs live sequential workflow execution against real database records (gated, requires ENABLE_REAL_WORKFLOW_TEST_API=true).
+* **GET** `/api/books/{book_id}/workflow/runs/{run_id}/trace` — Retrieve complete consolidated agent trace, prompt log, and token cost ledger bundle for a BookRun.
+
+---
+
+## 13. Chapter Generation Endpoints (Module 8.1)
+Connects multi-chapter and single-chapter generation loops with database-backed relational records, building per-chapter context queries from customization templates and tracking BookRun progress.
+* **POST** `/api/books/{book_id}/chapters/generate/mock-run` — Synchronously runs the chapter generation loop using MockLLMProvider (offline).
+* **POST** `/api/books/{book_id}/chapters/generate/dev-run-real` — Gated synchronous chapter generation loop against real OpenAI/Gemini providers (requires ENABLE_REAL_WORKFLOW_TEST_API=true).
+* **GET** `/api/books/{book_id}/chapters/generation-runs/{run_id}/trace` — Fetches timing logs, trace steps, and token cost summaries for a chapter generation run.
+
+---
+
+## 14. Chapter Self-Healing Endpoints (Module 8.2)
+Manages chapter insertion with automatic self-healing repair of book structure: TOC renumbering, cross-chapter callback shifting, glossary/concept bible updates, and back matter metadata audit.
+* **POST** `/api/books/{book_id}/chapters/insert-repair/mock-run` — Synchronously inserts a chapter and runs self-healing repair using MockLLMProvider (offline).
+* **POST** `/api/books/{book_id}/chapters/insert-repair/dev-run-real` — Gated synchronous chapter insert + repair against real Gemini/OpenAI providers (requires ENABLE_REAL_WORKFLOW_TEST_API=true).
+* **GET** `/api/books/{book_id}/chapters/insert-repair/runs/{run_id}/trace` — Fetches agent trace bundle, prompt logs, and token cost summaries for a self-healing repair run.
+
+---
+
+## 15. Book Assembly & Export Endpoints (Module 10.0)
+Generates real downloadable book artifacts and publication-ready manuscripts.
+* **POST** `/api/books/{book_id}/assemble` — Assemble manuscript synchronously from outline and chapter text.
+* **POST** `/api/books/{book_id}/exports/generate` — Assemble and generate DOCX and PDF files synchronously, writing ExportFile rows.
+* **GET** `/api/books/{book_id}/exports/files` — Retrieve all generated export file records for a book project.
+* **GET** `/api/books/{book_id}/exports/files/{export_id}/metadata` — Retrieve metadata dictionary for a specific export file.
+
+---
+
+## 16. Delivery & Evaluation Reports Endpoints (Module 11.0)
+Reviews qualitative validation scores, compiles prompt template dossiers, and packages delivery bundles.
+* **POST** `/api/books/{book_id}/reports/evaluation` — Generate a qualitative evaluation scorecard and optionally persist to the DB.
+* **POST** `/api/reports/prompt-dossier` — Package template prompt inventory details and render user prompt examples.
+* **POST** `/api/books/{book_id}/delivery-bundle` — Assemble and serialize evaluation, prompt, architecture, memory, trace, and export summaries to disk.
+* **GET** `/api/books/{book_id}/delivery-bundle/latest` — Retrieve the latest generated delivery bundle manifest dictionary.
+
+---
+
 ## Not Implemented Yet (Postponed to Workflow Modules)
 The API layer operates purely as a database-driven CRUD and metadata management backend. The following runtime orchestrations and features will be implemented in subsequent agent/workflow phases:
 1. **Full Book Generation**: Background worker pipelines to generate complete books are not built yet.
 2. **Real Evaluation Execution**: Evaluators only summarize recorded logs; no automated quality tests are run.
-3. **Real DOCX/PDF Generation**: Export request produces database records with `pending://` URIs; no physical file files are generated on disk.
-4. **React User Interface**: The UI resides in a separate client-side bundle.
+3. **React User Interface**: The UI resides in a separate client-side bundle.
+
+

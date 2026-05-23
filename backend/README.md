@@ -17,6 +17,75 @@ To check and verify the pgvector vector store readiness:
 
 ## Project Progress Status
 
+### ✅ Module 11.0 Completed: Evaluation Report, Prompt Dossier, and Delivery Artifacts
+- **Evaluation Report Service** (`evaluation_report_service.py`): Performs qualitative scorecard validations for chapter sequential numbering, draft/final text presence, repair metadata auditing, export disk integrity, trace coverage, prompt logs, and continuity memory counts.
+- **Prompt Dossier Service** (`prompt_dossier_service.py`): Packages all 8 agent prompt templates, versions, role excerpts, and dummy rendered user examples into a clean, deterministic markdown dossier.
+- **Delivery Bundle Service** (`delivery_bundle_service.py`): Assembles and writes assessment-ready delivery artifacts (evaluation_report.md, prompt_dossier.md, architecture_summary.md, memory_report.md, trace_summary.md, export_summary.md, manifest.json) to disk.
+- **Unified Delivery APIs**:
+  - `POST /api/books/{book_id}/reports/evaluation` (generates scorecard report and optionally persists db rows)
+  - `POST /api/reports/prompt-dossier` (compiles templates and renders example user inputs)
+  - `POST /api/books/{book_id}/delivery-bundle` (synchronously creates documentation files and exports manifest.json)
+  - `GET /api/books/{book_id}/delivery-bundle/latest` (retrieves the latest generated manifest dict)
+- **Comprehensive Offline Verification**: Added 36 unit and integration tests verifying checks, dossier formats, disk serialization, API routing, and OpenAPI paths.
+
+### ✅ Module 10.0 Completed: Book Assembler and DOCX/PDF Export Generation
+- **Book Assembler Service** (`book_assembler_service.py`): Compiles publication-ready manuscripts from chapters (prefers final_text with fallbacks), outlines, virtual front/back matter (Title Page, Copyright, Table of Contents, Conclusion), memory concepts (glossary), and RAG source documents (bibliography).
+- **Document Export Service** (`document_export_service.py`): Generates structured `.docx` files using `python-docx` and converts them to `.pdf` via headless LibreOffice (if available).
+- **Relational Persistence Tracking**: Automatically persists generated export details into the existing `ExportFile` database model (`ready` or `failed` status, file path, file size, timestamp, error message).
+- **Unified Export APIs**:
+  - `POST /api/books/{book_id}/assemble` (synchronous manuscript assembly preview)
+  - `POST /api/books/{book_id}/exports/generate` (synchronous DOCX/PDF export file generation)
+  - `GET /api/books/{book_id}/exports/files` (lists generated files)
+  - `GET /api/books/{book_id}/exports/files/{export_id}/metadata` (retrieves metadata dict)
+- **Comprehensive Offline Verification**: Added 28 unit and integration tests verifying assembler priorities, virtual layout logic, word counts, DOCX writing, mocked PDF conversion, database persistence, and API endpoint routing.
+
+### ✅ Module 9.0 Completed: MemoryKeeper DB Integration
+
+- **Memory Extraction Service** (`memory_extraction_service.py`): Extracts story continuity records from raw text, chapters, workflow outputs, or traces, and persists them to `FactRegistry`, `ConceptBible`, `CharacterBible`, `CallbackIndex`, `ToneFingerprint`, and `DecisionLog`.
+- **Continuity Pack Service** (`continuity_pack_service.py`): Compiles stored memory tables into a structured markdown document (Continuity Pack) for consumption by future writer/editor agents, respecting item limits and total character size constraints.
+- **Robust Parsing Fallbacks**: Parses LLM responses cleanly using markdown JSON parsing, nested key normalization, and raw bullet-point fallbacks.
+- **Unified Memory Extraction APIs**:
+  - `POST /api/books/{book_id}/memory/extract/mock-run` (synchronous mock extraction)
+  - `POST /api/books/{book_id}/memory/extract/dev-run-real` (live gated Gemini execution, disabled by default)
+  - `POST /api/books/{book_id}/memory/extract/from-chapter/{chapter_id}/mock-run` (mock chapter extraction)
+  - `POST /api/books/{book_id}/memory/extract/from-chapter/{chapter_id}/dev-run-real` (live gated chapter extraction)
+  - `POST /api/books/{book_id}/memory/continuity-pack` (compiles Continuity Pack)
+- **Comprehensive Offline Verification**: Added 33 unit and integration tests verifying mock candidate generation, DB persistence, duplicate key handling, fallbacks, and API route binding — **1008 / 1008 tests passing successfully**.
+
+### ✅ Module 8.2 Completed: Chapter Insert & Self-Healing Repair
+- **Chapter Self-Healing Service** (`chapter_self_healing_service.py`): Provides resilient chapter insertion with automatic structural repair across the entire book project.
+- **Self-Healing Repairs**: Automatically detects and repairs chapter numbering gaps, TOC sections, cross-chapter callback references (`CallbackIndex`), glossary/concept bible (`ConceptBible`) chapter mappings, and back matter section metadata.
+- **Partial Failure Resilience**: Each repair sub-system runs independently inside `try-except` blocks. A failure in one repair does not prevent others from executing — all failures are logged as `StructureRepairItem` entries.
+- **Defensive Tone Handling**: Safely maps `BookProject.tone` to `TonePreset` enum values when constructing `ChapterInsertRequest`, falling back to `None` for non-standard tones.
+- **Unified Self-Healing APIs**:
+  - `POST /api/books/{book_id}/chapters/insert-repair/mock-run` (synchronous mock insert + repair)
+  - `POST /api/books/{book_id}/chapters/insert-repair/dev-run-real` (live gated Gemini execution, disabled by default)
+  - `GET /api/books/{book_id}/chapters/insert-repair/runs/{run_id}/trace` (retrieves the trace bundle for the repair run)
+- **Comprehensive Offline Verification**: Added 26 unit and integration tests verifying chapter shifting, numbering continuity, TOC/callback/glossary/back-matter repairs, trace persistence, and partial failure resilience — **975 / 975 tests passing successfully**.
+
+### ✅ Module 8.1 Completed: Chapter Generation Loop + Chapter Persistence
+- **Chapter Generation Loop Service** (`chapter_generation_service.py`): Connects chapter-by-chapter and single-chapter generation loops with database-backed relational records using the existing `full_agent_pipeline` StateGraph.
+- **Relational Persistence Mapping**: Intelligently writes pipeline outputs straight to the existing `draft_text`, `humanized_text`, `edited_text`, and `final_text` columns in the database without requiring schema migrations.
+- **Sequential Progress Calculation**: Automatically tracks run progress by computing percentage limits: `round((processed_count / total_requested) * 100, 2)` and updates timing logs iteratively.
+- **Context Pack per Chapter**: Customizes RAG context packing for each targeted chapter using placeholders `{book_title}`, `{book_topic}`, `{chapter_number}`, `{chapter_title}`.
+- **Unified Chapter Generation APIs**:
+  - `POST /api/books/{book_id}/chapters/generate/mock-run` (synchronous mock loop execution)
+  - `POST /api/books/{book_id}/chapters/generate/dev-run-real` (live gated Gemini execution, disabled by default)
+  - `GET /api/books/{book_id}/chapters/generation-runs/{run_id}/trace` (retrieves the trace bundle for the run)
+- **Comprehensive Offline Verification**: Added 33 unit and integration tests verifying all loops, selection logic, RAG queries, and overwrite controls offline.
+
+### ✅ Module 8.0 Completed: BookRun Workflow Integration
+
+- **BookRun Workflow Service** (`bookrun_workflow_service.py`): Connected dynamic multi-agent LangGraph sequential workflows with database-backed relational records (`BookProject`, `BookRun`, and `Chapter`).
+- **Resilient Context Packing**: Enabled automatic character-window context-packing with standard retrieval and fallback resilience mapping when vector RAG stores contain zero embedded chunks.
+- **Relational Trace Persistence**: Systematically bound observability traces, prompt logging, and billing token ledgers directly to `run_id`, `book_id`, and optional `chapter_id` foreign keys in the database.
+- **Strict Input Validation**: Configured strict request schema checks on `workflow_name`, `execution_mode`, `max_context_chunks`, and `max_context_chars`, yielding native `422 Unprocessable Entity` validation responses.
+- **Unified Book-Backed APIs**:
+  - `POST /api/books/{book_id}/workflow/mock-run` (synchronous mock sequential execution)
+  - `POST /api/books/{book_id}/workflow/dev-run-real` (live Gemini execution, gated by `ENABLE_REAL_WORKFLOW_TEST_API=true`)
+  - `GET /api/books/{book_id}/workflow/runs/{run_id}/trace` (retrieves the trace bundle scoped under book and run)
+- **Comprehensive Verification**: Implemented 23 backend integration and unit tests, achieving 100% offline verification coverage with 0 live network hooks — **916 / 916 tests passing successfully**.
+
 ### ✅ Module 7.2A Completed: Full 8-Agent Workflow Skeleton
 - **Full 8-Agent compiled pipeline** (`full_agent_pipeline`): Integrated `humanizer`, `memory_keeper`, and `assembler` nodes sequentially into the compiled LangGraph workflow skeleton: `planner` → `researcher` → `writer` → `humanizer` → `editor` → `fact_checker` → `memory_keeper` → `assembler`.
 - **Enhanced schemas & validation**: Configured strict field validation for supported `workflow_name` values, raising standard 422 errors for unrecognized requests.

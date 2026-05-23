@@ -23,6 +23,9 @@ def test_all_expected_route_modules_importable():
     import app.api.routes_observability  # noqa: F401
     import app.api.routes_eval_export  # noqa: F401
     import app.api.error_handlers  # noqa: F401
+    import app.api.routes_memory_extraction  # noqa: F401
+    import app.api.routes_book_exports  # noqa: F401
+    import app.api.routes_delivery_reports  # noqa: F401
 
 
 def test_all_expected_services_importable():
@@ -46,6 +49,15 @@ def test_all_expected_services_importable():
         ContextPackService,
         AgentExecutionService,
         WorkflowExecutionService,
+        ChapterGenerationService,
+        ChapterSelfHealingService,
+        MemoryExtractionService,
+        ContinuityPackService,
+        BookAssemblerService,
+        DocumentExportService,
+        PromptDossierService,
+        EvaluationReportService,
+        DeliveryBundleService,
     )
 
     assert BookProjectService is not None
@@ -66,6 +78,18 @@ def test_all_expected_services_importable():
     assert ContextPackService is not None
     assert AgentExecutionService is not None
     assert WorkflowExecutionService is not None
+    assert ChapterGenerationService is not None
+    assert ChapterSelfHealingService is not None
+    assert MemoryExtractionService is not None
+    assert ContinuityPackService is not None
+    assert BookAssemblerService is not None
+    assert DocumentExportService is not None
+    assert PromptDossierService is not None
+    assert EvaluationReportService is not None
+    assert DeliveryBundleService is not None
+
+
+
 
 
 def test_openapi_schema_loads(client: TestClient):
@@ -125,6 +149,12 @@ def test_openapi_contains_memory_paths(client: TestClient):
     assert "/api/books/{book_id}/memory/tone-fingerprints" in paths
     assert "/api/books/{book_id}/memory/decisions" in paths
     assert "/api/memory/decisions" in paths
+    # Module 9.0 Memory extraction routes
+    assert "/api/books/{book_id}/memory/extract/mock-run" in paths
+    assert "/api/books/{book_id}/memory/extract/dev-run-real" in paths
+    assert "/api/books/{book_id}/memory/extract/from-chapter/{chapter_id}/mock-run" in paths
+    assert "/api/books/{book_id}/memory/extract/from-chapter/{chapter_id}/dev-run-real" in paths
+    assert "/api/books/{book_id}/memory/continuity-pack" in paths
 
 
 def test_openapi_contains_observability_paths(client: TestClient):
@@ -152,7 +182,17 @@ def test_openapi_contains_eval_export_paths(client: TestClient):
     assert "/api/runs/{run_id}/exports" in paths
 
 
+def test_openapi_contains_book_export_paths(client: TestClient):
+    """Verify OpenAPI schema registers book assembly and export routes."""
+    paths = client.get("/openapi.json").json()["paths"]
+    assert "/api/books/{book_id}/assemble" in paths
+    assert "/api/books/{book_id}/exports/generate" in paths
+    assert "/api/books/{book_id}/exports/files" in paths
+    assert "/api/books/{book_id}/exports/files/{export_id}/metadata" in paths
+
+
 def test_openapi_contains_agent_paths(client: TestClient):
+
     """Verify OpenAPI schema registers agent endpoints."""
     paths = client.get("/openapi.json").json()["paths"]
     assert "/api/agents" in paths
@@ -163,7 +203,7 @@ def test_openapi_contains_agent_paths(client: TestClient):
 
 
 def test_openapi_contains_workflow_paths(client: TestClient):
-    """Verify OpenAPI schema registers workflow endpoints (Module 7.1A & 7.1B)."""
+    """Verify OpenAPI schema registers workflow endpoints (Module 7.1A & 7.1B & 8.0)."""
     paths = client.get("/openapi.json").json()["paths"]
     assert "/api/workflows" in paths
     assert "/api/workflows/{workflow_name}" in paths
@@ -172,6 +212,17 @@ def test_openapi_contains_workflow_paths(client: TestClient):
     assert "/api/workflows/mock-run-traced" in paths
     assert "/api/workflows/dev-run-real-traced" in paths
     assert "/api/workflows/traces/{run_id}" in paths
+    assert "/api/books/{book_id}/workflow/mock-run" in paths
+    assert "/api/books/{book_id}/workflow/dev-run-real" in paths
+    assert "/api/books/{book_id}/workflow/runs/{run_id}/trace" in paths
+    assert "/api/books/{book_id}/chapters/generate/mock-run" in paths
+    assert "/api/books/{book_id}/chapters/generate/dev-run-real" in paths
+    assert "/api/books/{book_id}/chapters/generation-runs/{run_id}/trace" in paths
+    # Module 8.2 — Chapter Self-Healing
+    assert "/api/books/{book_id}/chapters/insert-repair/mock-run" in paths
+    assert "/api/books/{book_id}/chapters/insert-repair/dev-run-real" in paths
+    assert "/api/books/{book_id}/chapters/insert-repair/runs/{run_id}/trace" in paths
+
 
 
 def test_no_duplicate_route_method_pairs():
@@ -195,7 +246,11 @@ def test_static_routes_exist_separately_from_dynamic_routes(client: TestClient):
         "/api/books/{book_id}/sections/reorder",
         "/api/books/{book_id}/exports/request",
         "/api/books/{book_id}/exports/bundle",
+        "/api/books/{book_id}/assemble",
+        "/api/books/{book_id}/exports/generate",
+        "/api/books/{book_id}/exports/files",
         "/api/agents/render-prompt",
+
         "/api/agents/mock-run",
         "/api/agents/dev-run-real",
         "/api/workflows/mock-run",
@@ -247,3 +302,13 @@ def test_workflow_registry_exposes_both_pipelines(client: TestClient):
     names = [w["workflow_name"] for w in data]
     assert "mini_book_pipeline" in names
     assert "full_agent_pipeline" in names
+
+
+def test_openapi_contains_delivery_report_paths(client: TestClient):
+    """Verify OpenAPI schema registers delivery report and prompt dossier routes."""
+    paths = client.get("/openapi.json").json()["paths"]
+    assert "/api/books/{book_id}/reports/evaluation" in paths
+    assert "/api/reports/prompt-dossier" in paths
+    assert "/api/books/{book_id}/delivery-bundle" in paths
+    assert "/api/books/{book_id}/delivery-bundle/latest" in paths
+

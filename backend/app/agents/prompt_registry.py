@@ -83,9 +83,18 @@ class PromptRegistry:
         """
         system_prompt = self.get_template(agent_name)
 
+        def json_serial(obj):
+            import uuid
+            if isinstance(obj, uuid.UUID):
+                return str(obj)
+            from datetime import datetime, date
+            if isinstance(obj, (datetime, date)):
+                return obj.isoformat()
+            raise TypeError(f"Type {type(obj)} not serializable")
+
         # Deterministic serialization using sorted keys and standard indentation
-        context_str = json.dumps(context or {}, sort_keys=True, indent=2)
-        metadata_str = json.dumps(metadata or {}, sort_keys=True, indent=2)
+        context_str = json.dumps(context or {}, default=json_serial, sort_keys=True, indent=2)
+        metadata_str = json.dumps(metadata or {}, default=json_serial, sort_keys=True, indent=2)
 
         user_prompt = (
             f"Task:\n{task}\n\n"

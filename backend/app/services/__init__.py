@@ -29,6 +29,16 @@ from app.services.context_pack_service import ContextPackService
 from app.services.agent_execution_service import AgentExecutionService
 from app.services.workflow_execution_service import WorkflowExecutionService
 from app.services.workflow_observability_service import WorkflowObservabilityService
+from app.services.bookrun_workflow_service import BookRunWorkflowService
+from app.services.chapter_generation_service import ChapterGenerationService
+from app.services.chapter_self_healing_service import ChapterSelfHealingService
+from app.services.memory_extraction_service import MemoryExtractionService
+from app.services.continuity_pack_service import ContinuityPackService
+from app.services.book_assembler_service import BookAssemblerService
+from app.services.document_export_service import DocumentExportService
+from app.services.prompt_dossier_service import PromptDossierService
+from app.services.evaluation_report_service import EvaluationReportService
+from app.services.delivery_bundle_service import DeliveryBundleService
 
 __all__ = [
     "ServiceError",
@@ -54,6 +64,17 @@ __all__ = [
     "AgentExecutionService",
     "WorkflowExecutionService",
     "WorkflowObservabilityService",
+    "BookRunWorkflowService",
+    "ChapterGenerationService",
+    "ChapterSelfHealingService",
+    "MemoryExtractionService",
+    "ContinuityPackService",
+    "BookAssemblerService",
+    "DocumentExportService",
+    "PromptDossierService",
+    "EvaluationReportService",
+    "DeliveryBundleService",
 ]
+
 
 
