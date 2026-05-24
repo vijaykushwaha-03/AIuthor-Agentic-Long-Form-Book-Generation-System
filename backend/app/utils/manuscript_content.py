@@ -103,6 +103,40 @@ def extract_chapter_content_from_json(
             
         # Case: {"chapters": [...]}
         chapters = data.get("chapters")
+        
+        # Fallback for nested front_matter/back_matter if chapters is empty or missing
+        if not chapters or (isinstance(chapters, list) and len(chapters) == 0):
+            # Check front_matter
+            front = data.get("front_matter")
+            if isinstance(front, dict):
+                is_intro = False
+                if chapter_number == 1:
+                    is_intro = True
+                elif chapter_title and any(k in chapter_title.lower() for k in ["intro", "preface", "foreword"]):
+                    is_intro = True
+                
+                if is_intro:
+                    for key in ["introduction", "preface", "foreword", "content", "body", "text"]:
+                        val = front.get(key)
+                        if val and isinstance(val, str) and val.strip():
+                            return val
+                            
+            # Check back_matter
+            back = data.get("back_matter")
+            if isinstance(back, dict):
+                is_conclusion = False
+                if chapter_title and any(k in chapter_title.lower() for k in ["conclusion", "epilogue", "summary"]):
+                    is_conclusion = True
+                    
+                if is_conclusion:
+                    for key in ["conclusion", "summary", "epilogue", "content", "body", "text"]:
+                        val = back.get(key)
+                        if val and isinstance(val, str) and val.strip():
+                            return val
+                            
+            # Ultimate fallback to any non-empty introduction in front_matter
+            if isinstance(front, dict) and "introduction" in front and isinstance(front["introduction"], str) and front["introduction"].strip():
+                return front["introduction"]
     elif isinstance(data, list):
         # Case: [...]
         chapters = data
