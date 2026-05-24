@@ -42,6 +42,7 @@ class AIuthorWorkflowState(TypedDict):
     steps: list                  # list[dict] — one entry per completed node
     status: str                  # "running" | "completed" | "failed"
     error_message: Optional[str]
+    retry_count: int             # number of writer→fact_checker retries so far
     # Tracing & Observability
     persist_traces: bool
     trace_steps: list[dict]
@@ -82,6 +83,7 @@ def workflow_input_to_state(
         steps=[],
         status="running",
         error_message=None,
+        retry_count=0,
         persist_traces=persist,
         trace_steps=[],
         trace_bundle=None,

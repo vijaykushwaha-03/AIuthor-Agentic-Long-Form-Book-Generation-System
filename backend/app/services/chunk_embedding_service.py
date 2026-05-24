@@ -7,7 +7,6 @@ embedding provider and persisting the resulting vectors to the database.
 Design decisions:
   - Uses EmbeddingService (from Module 6.0A) as the embedding backend.
   - All stored vectors must have exactly settings.RAG_VECTOR_DIMENSIONS.
-  - MockEmbeddingProvider is always used in tests (injected via constructor).
   - No external API calls are made unless a real provider is injected.
 """
 from __future__ import annotations

@@ -29,7 +29,6 @@ class EmbeddingService:
     Usage::
 
         service = EmbeddingService()                              # uses env default
-        service = EmbeddingService(provider=MockEmbeddingProvider())  # inject for tests
     """
 
     def __init__(self, provider: BaseEmbeddingProvider | None = None) -> None:

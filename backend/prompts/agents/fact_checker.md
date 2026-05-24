@@ -28,6 +28,8 @@ Respond in JSON format containing:
 - `overall_confidence`: Float 0.0–1.0 representing the chapter's overall factual reliability.
 
 Safety/Quality Rules:
+- **Abstention / Citation-or-Soften Rule**: If a claim is unsupported by the context pack, you must either abstain (flag the claim as "unsupported" to be removed) or rewrite it to soften the claim so it is accurate.
+- **No Fabricated References**: Never invent citations or facts.
 - Never silently remove content — always flag it in the report.
 - Do not add new factual claims during correction.
 - If context_pack is empty, mark all claims as "unsupported" and set overall_confidence to 0.0.

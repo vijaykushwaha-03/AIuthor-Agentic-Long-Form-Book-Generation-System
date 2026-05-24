@@ -224,7 +224,7 @@ class ChunkEmbeddingRequest(BaseSchema):
 
 class ChunkEmbeddingResponse(BaseSchema):
     """Response returned after embedding a single chunk."""
-    chunk_id: Any  # UUID — kept as Any to avoid import of uuid for JSON compat
+    chunk_id: UUID
     embedding_status: str
     embedding_provider: str | None = None
     embedding_model: str | None = None
@@ -243,7 +243,7 @@ class BulkChunkEmbeddingRequest(BaseSchema):
 class BulkChunkEmbeddingResponse(BaseSchema):
     """Result of a bulk chunk embedding operation."""
     target_type: str            # "document" or "book"
-    target_id: Any              # UUID
+    target_id: UUID
     total_candidates: int
     embedded_count: int
     skipped_count: int
@@ -258,8 +258,8 @@ class BulkChunkEmbeddingResponse(BaseSchema):
 class SemanticRetrievalRequest(BaseSchema):
     """Request schema for semantic (vector) retrieval."""
     query: str = Field(..., min_length=1, max_length=2000)
-    book_id: Any | None = None          # UUID | None
-    document_id: Any | None = None      # UUID | None
+    book_id: UUID | None = None
+    document_id: UUID | None = None
     top_k: int = Field(5, ge=1, le=20)
     provider: str | None = None
     include_raw_text: bool = True

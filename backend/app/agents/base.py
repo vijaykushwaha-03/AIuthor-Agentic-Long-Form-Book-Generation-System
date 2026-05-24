@@ -11,6 +11,7 @@ from app.llm.schemas import LLMMessage, LLMRequest
 from app.agents.schemas import AgentInput, AgentOutput, AgentInfo
 from app.agents.prompt_registry import PromptRegistry
 from app.agents.exceptions import AgentExecutionError
+from app.utils.manuscript_content import extract_prose_from_llm_response
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,12 @@ class BaseAgent(abc.ABC):
                 details={"error": str(exc)},
             )
 
+        # Sanitize: extract clean prose if LLM returned JSON-wrapped output.
+        # The original raw response content is preserved in structured_output.
+        # For prose-generation agents (writer, humanizer, editor, etc.) this
+        # ensures content always holds plain book-style prose, not raw JSON.
+        sanitized_content = extract_prose_from_llm_response(resp.content)
+
         # Attempt to parse json structure if output represents a JSON block
         structured_output = None
         try:
@@ -117,7 +124,7 @@ class BaseAgent(abc.ABC):
         return AgentOutput(
             agent_name=self.agent_name,
             status="completed",
-            content=resp.content,
+            content=sanitized_content,
             structured_output=structured_output,
             input_tokens=resp.input_tokens,
             output_tokens=resp.output_tokens,

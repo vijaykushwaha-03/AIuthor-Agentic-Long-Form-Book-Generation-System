@@ -54,6 +54,35 @@ REGISTERED_WORKFLOWS: dict[str, WorkflowInfo] = {
 }
 
 
+MAX_FACT_CHECK_RETRIES = 2
+
+
+def _fact_check_router(state: AIuthorWorkflowState) -> str:
+    """
+    Conditional edge after fact_checker_node.
+    - If fact_checker flagged unsupported claims AND retry_count < MAX_FACT_CHECK_RETRIES
+      → route back to 'writer' for a retry.
+    - Otherwise → proceed to 'memory_keeper'.
+    """
+    fc_out = state.get("fact_checker_output") or {}
+    retry_count = state.get("retry_count", 0)
+
+    # Detect failure signal: overall_confidence < 0.7 or any "unsupported"/"flagged" claims
+    failed = False
+    structured = fc_out.get("structured_output") or {}
+    if isinstance(structured, dict):
+        confidence = structured.get("overall_confidence", 1.0)
+        if confidence < 0.7:
+            failed = True
+        report = structured.get("fact_check_report", [])
+        if any(item.get("status") in ("unsupported", "flagged") for item in report if isinstance(item, dict)):
+            failed = True
+
+    if failed and retry_count < MAX_FACT_CHECK_RETRIES:
+        return "writer"
+    return "memory_keeper"
+
+
 # ─── Graph Builders ───────────────────────────────────────────────────────────
 
 def build_mini_book_workflow():
@@ -99,7 +128,11 @@ def build_full_agent_workflow():
     graph.add_edge("writer", "humanizer")
     graph.add_edge("humanizer", "editor")
     graph.add_edge("editor", "fact_checker")
-    graph.add_edge("fact_checker", "memory_keeper")
+    graph.add_conditional_edges(
+        "fact_checker",
+        _fact_check_router,
+        {"writer": "writer", "memory_keeper": "memory_keeper"},
+    )
     graph.add_edge("memory_keeper", "assembler")
     graph.add_edge("assembler", END)
 

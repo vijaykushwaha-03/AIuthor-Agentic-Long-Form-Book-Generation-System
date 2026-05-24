@@ -83,30 +83,9 @@ def handle_service_error(exc: Exception) -> None:
 
 
 @router.post(
-    "/insert-repair/mock-run",
-    response_model=InsertChapterRepairResponse,
-    summary="Execute mock chapter insertion and self-healing repair",
-    description="Synchronously inserts a chapter and runs self-healing repair using MockLLMProvider (offline).",
-)
-def insert_chapter_repair_mock(
-    book_id: UUID,
-    request: InsertChapterRepairRequest,
-    svc: ServiceDep,
-) -> InsertChapterRepairResponse:
-    """
-    Synchronous offline mock chapter insert and repair, enforcing book_id path validation.
-    """
-    request_copy = request.model_copy(update={"book_id": book_id, "execution_mode": "mock"})
-    try:
-        return svc.repair_inserted_chapter(request_copy)
-    except Exception as exc:
-        handle_service_error(exc)
-
-
-@router.post(
     "/insert-repair/dev-run-real",
     response_model=InsertChapterRepairResponse,
-    summary="Execute dev-real chapter insertion and self-healing repair (Gated)",
+    summary="Execute chapter insertion and self-healing repair",
     description="Synchronously inserts a chapter and runs self-healing repair using live Gemini/OpenAI.",
 )
 def insert_chapter_repair_real_dev(
@@ -115,18 +94,8 @@ def insert_chapter_repair_real_dev(
     svc: ServiceDep,
 ) -> InsertChapterRepairResponse:
     """
-    Synchronous live chapter insert and repair, gated by ENABLE_REAL_WORKFLOW_TEST_API.
+    Synchronous live chapter insert and repair.
     """
-    settings = get_settings()
-    if not settings.enable_real_workflow_test_api:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "message": "Real workflow execution API is disabled in this environment.",
-                "code": "real_workflow_test_api_disabled",
-            },
-        )
-
     request_copy = request.model_copy(update={"book_id": book_id, "execution_mode": "real_dev"})
     try:
         return svc.repair_inserted_chapter(request_copy)

@@ -112,21 +112,7 @@ def render_prompt(
         handle_agent_error(exc)
 
 
-@router.post(
-    "/mock-run",
-    response_model=AgentOutput,
-    status_code=status.HTTP_200_OK,
-    summary="Run agent mock execution",
-    description="Always forces generation through MockLLMProvider. Safe for offline test coverage.",
-)
-def mock_run(
-    payload: AgentInput,
-    svc: AgentServiceDep,
-) -> AgentOutput:
-    try:
-        return svc.run_agent_mock(payload)
-    except Exception as exc:
-        handle_agent_error(exc)
+
 
 
 @router.post(

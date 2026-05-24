@@ -9,7 +9,7 @@ from __future__ import annotations
 from app.llm.schemas import LLMMessage, LLMRequest, LLMResponse, LLMProviderInfo
 from app.llm.exceptions import LLMError, LLMConfigurationError, LLMProviderError
 from app.llm.base import BaseLLMProvider
-from app.llm.providers import MockLLMProvider, GeminiLLMProvider, OpenAILLMProvider
+from app.llm.providers import GeminiLLMProvider, OpenAILLMProvider
 from app.llm.factory import get_llm_provider, get_default_llm_provider
 
 __all__ = [
@@ -25,7 +25,6 @@ __all__ = [
     # Base
     "BaseLLMProvider",
     # Providers
-    "MockLLMProvider",
     "GeminiLLMProvider",
     "OpenAILLMProvider",
     # Factory

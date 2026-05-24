@@ -13,11 +13,8 @@ from app.database import get_db
 from app.workflows.schemas import (
     BackendReadinessReportRequest,
     BackendReadinessReportResponse,
-    EndToEndDryRunRequest,
-    EndToEndDryRunResponse,
 )
 from app.services.backend_readiness_service import BackendReadinessService
-from app.services.e2e_dry_run_service import EndToEndDryRunService
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +26,6 @@ def _readiness_service(db: DbDep) -> BackendReadinessService:
     return BackendReadinessService(db)
 
 ReadinessServiceDep = Annotated[BackendReadinessService, Depends(_readiness_service)]
-
-def _e2e_dry_run_service(db: DbDep) -> EndToEndDryRunService:
-    return EndToEndDryRunService(db)
-
-EndToEndDryRunServiceDep = Annotated[EndToEndDryRunService, Depends(_e2e_dry_run_service)]
 
 
 @router.post(
@@ -52,17 +44,6 @@ def run_readiness_report(
     return service.run_readiness_report(request)
 
 
-@router.post(
-    "/e2e-dry-run",
-    response_model=EndToEndDryRunResponse,
-    summary="Execute E2E Dry Run",
-    description="Synchronously execute a sequential, mock/offline-safe run of the book creation pipeline.",
-)
-def run_e2e_dry_run(
-    request: EndToEndDryRunRequest,
-    service: EndToEndDryRunServiceDep,
-) -> EndToEndDryRunResponse:
-    return service.run_dry_run(request)
 
 
 @router.get(

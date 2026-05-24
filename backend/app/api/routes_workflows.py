@@ -85,26 +85,6 @@ def list_workflows(svc: WorkflowServiceDep) -> list[WorkflowInfo]:
         handle_workflow_error(exc)
 
 
-@router.post(
-    "/mock-run-traced",
-    response_model=WorkflowTraceResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Run traced workflow in mock mode",
-    description=(
-        "Execute the LangGraph mini pipeline in mock mode. "
-        "Persists traces, prompts, and tokens in the database if persist_traces=true. "
-        "Safe for offline automated unit testing."
-    ),
-)
-def mock_run_traced(
-    payload: WorkflowTraceRequest,
-    svc: WorkflowServiceDep,
-) -> WorkflowTraceResponse:
-    try:
-        return svc.run_workflow_mock_traced(payload)
-    except Exception as exc:
-        handle_workflow_error(exc)
-
 
 @router.post(
     "/dev-run-real-traced",
@@ -114,47 +94,18 @@ def mock_run_traced(
     description=(
         "Execute the LangGraph mini pipeline against live LLM providers. "
         "Persists traces, prompts, and tokens in the database if persist_traces=true. "
-        "Enabled only when ENABLE_REAL_WORKFLOW_TEST_API=true. "
-        "NEVER call this from automated unit tests."
     ),
 )
 def dev_run_real_traced(
     payload: WorkflowTraceRequest,
     svc: WorkflowServiceDep,
 ) -> WorkflowTraceResponse:
-    settings = get_settings()
-    if not settings.enable_real_workflow_test_api:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=(
-                "Real workflow test API is disabled. "
-                "Set ENABLE_REAL_WORKFLOW_TEST_API=true for local manual testing."
-            ),
-        )
+
     try:
         return svc.run_workflow_real_dev_traced(payload)
     except Exception as exc:
         handle_workflow_error(exc)
 
-
-@router.post(
-    "/mock-run",
-    response_model=WorkflowOutput,
-    status_code=status.HTTP_200_OK,
-    summary="Run workflow in mock mode (legacy)",
-    description=(
-        "Execute the full LangGraph pipeline using MockLLMProvider for every agent node. "
-        "No external API calls are made. Safe for offline tests and API contract validation."
-    ),
-)
-def mock_run_workflow(
-    payload: WorkflowInput,
-    svc: WorkflowServiceDep,
-) -> WorkflowOutput:
-    try:
-        return svc.run_workflow_mock(payload)
-    except Exception as exc:
-        handle_workflow_error(exc)
 
 
 @router.post(
@@ -165,23 +116,13 @@ def mock_run_workflow(
     description=(
         "Execute the full LangGraph mini_book_pipeline against configured real Gemini/OpenAI models. "
         "All 5 agent nodes (planner → researcher → writer → editor → fact_checker) are invoked in order. "
-        "Enabled only when ENABLE_REAL_WORKFLOW_TEST_API=true. "
-        "NEVER call this from automated tests."
     ),
 )
 def dev_run_real_workflow(
     payload: WorkflowInput,
     svc: WorkflowServiceDep,
 ) -> WorkflowOutput:
-    settings = get_settings()
-    if not settings.enable_real_workflow_test_api:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=(
-                "Real workflow test API is disabled. "
-                "Set ENABLE_REAL_WORKFLOW_TEST_API=true for local manual testing."
-            ),
-        )
+
     try:
         return svc.run_workflow_real_dev(payload)
     except Exception as exc:

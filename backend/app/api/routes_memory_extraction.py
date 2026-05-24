@@ -52,38 +52,8 @@ ContinuityPackServiceDep = Annotated[
 ]
 
 
-# Helper to gate real API calls
-def _check_real_api_gated() -> None:
-    settings = get_settings()
-    if not settings.enable_real_memory_test_api:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Real memory extraction API is disabled by default. Set ENABLE_REAL_MEMORY_TEST_API=true to enable.",
-        )
-
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
-
-@router.post(
-    "/api/books/{book_id}/memory/extract/mock-run",
-    response_model=MemoryExtractionResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Extract memory candidates (Mock Run)",
-    description="Deterministically parse memory candidates without contacting LLMs, saving outputs to DB tables if requested.",
-)
-def extract_memory_mock(
-    book_id: UUID,
-    payload: MemoryExtractionRequest,
-    svc: MemoryExtractionServiceDep,
-) -> MemoryExtractionResponse:
-    try:
-        # Force book_id and mock execution mode
-        payload_copy = payload.model_copy(
-            update={"book_id": book_id, "execution_mode": "mock"}
-        )
-        return svc.extract_memory(payload_copy)
-    except (NotFoundError, ValidationServiceError, ConflictError, Exception) as exc:
-        handle_service_error(exc)
 
 
 @router.post(
@@ -98,8 +68,7 @@ def extract_memory_real(
     payload: MemoryExtractionRequest,
     svc: MemoryExtractionServiceDep,
 ) -> MemoryExtractionResponse:
-    # Strict gate
-    _check_real_api_gated()
+
     try:
         # Force book_id and real execution mode
         payload_copy = payload.model_copy(
@@ -109,33 +78,6 @@ def extract_memory_real(
     except (NotFoundError, ValidationServiceError, ConflictError, Exception) as exc:
         handle_service_error(exc)
 
-
-@router.post(
-    "/api/books/{book_id}/memory/extract/from-chapter/{chapter_id}/mock-run",
-    response_model=MemoryExtractionResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Extract memory from chapter (Mock Run)",
-    description="Extract memory from chapter draft/final text, reordering chapter sequence and running deterministically.",
-)
-def extract_chapter_memory_mock(
-    book_id: UUID,
-    chapter_id: UUID,
-    payload: MemoryExtractionRequest,
-    svc: MemoryExtractionServiceDep,
-) -> MemoryExtractionResponse:
-    try:
-        # Force book_id, chapter_id, source_type=chapter, execution_mode=mock
-        payload_copy = payload.model_copy(
-            update={
-                "book_id": book_id,
-                "chapter_id": chapter_id,
-                "source_type": "chapter",
-                "execution_mode": "mock",
-            }
-        )
-        return svc.extract_memory(payload_copy)
-    except (NotFoundError, ValidationServiceError, ConflictError, Exception) as exc:
-        handle_service_error(exc)
 
 
 @router.post(
@@ -151,8 +93,7 @@ def extract_chapter_memory_real(
     payload: MemoryExtractionRequest,
     svc: MemoryExtractionServiceDep,
 ) -> MemoryExtractionResponse:
-    # Strict gate
-    _check_real_api_gated()
+
     try:
         # Force book_id, chapter_id, source_type=chapter, execution_mode=real_dev
         payload_copy = payload.model_copy(

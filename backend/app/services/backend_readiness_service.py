@@ -268,12 +268,10 @@ class BackendReadinessService:
         checks = []
         expected_paths = [
             "/api/books",
-            "/api/workflows/mock-run",
-            "/api/workflows/mock-run-traced",
-            "/api/books/{book_id}/workflow/mock-run",
-            "/api/books/{book_id}/chapters/generate/mock-run",
-            "/api/books/{book_id}/chapters/insert-repair/mock-run",
-            "/api/books/{book_id}/memory/extract/mock-run",
+            "/api/books/{book_id}/workflow/dev-run-real",
+            "/api/books/{book_id}/chapters/generate/dev-run-real",
+            "/api/books/{book_id}/chapters/insert-repair/dev-run-real",
+            "/api/books/{book_id}/memory/extract/dev-run-real",
             "/api/books/{book_id}/memory/continuity-pack",
             "/api/books/{book_id}/assemble",
             "/api/books/{book_id}/exports/generate",

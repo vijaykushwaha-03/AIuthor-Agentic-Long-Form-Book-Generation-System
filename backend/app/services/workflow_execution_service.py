@@ -59,19 +59,6 @@ class WorkflowExecutionService:
             )
         return REGISTERED_WORKFLOWS[workflow_name]
 
-    # ── Mock execution (offline / test-safe) ─────────────────────────────────
-
-    def run_workflow_mock(self, input: WorkflowInput) -> WorkflowOutput:
-        """
-        Run the workflow using MockLLMProvider. Safe for offline automated tests.
-
-        No real LLM API calls are made. All agent nodes return deterministic mock output.
-        """
-        logger.debug("WorkflowExecutionService.run_workflow_mock: %s", input.workflow_name)
-        from app.workflows.graph import run_registered_workflow
-        return run_registered_workflow(input, execution_mode="mock")
-
-    # ── Real-dev execution (live LLM — manual testing only) ──────────────────
 
     def run_workflow_real_dev(self, input: WorkflowInput) -> WorkflowOutput:
         """
@@ -90,13 +77,8 @@ class WorkflowExecutionService:
 
     # ── Traced execution methods (Module 7.2A) ───────────────────────────────
 
-    def run_workflow_mock_traced(self, input: WorkflowTraceRequest) -> WorkflowTraceResponse:
-        """
-        Run the workflow in mock mode and persist traces if enabled.
-        """
-        return self._run_workflow_traced(input, execution_mode="mock")
-
     def run_workflow_real_dev_traced(self, input: WorkflowTraceRequest) -> WorkflowTraceResponse:
+
         """
         Run the workflow in real_dev mode and persist traces if enabled.
         """

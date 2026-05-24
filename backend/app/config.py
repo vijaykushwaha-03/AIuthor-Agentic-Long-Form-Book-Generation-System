@@ -62,6 +62,19 @@ class Settings(BaseSettings):
         default="gemini-2.5-flash",
         description="Gemini model name (e.g. gemini-2.5-flash, gemini-1.5-pro).",
     )
+    GEMINI_RPM: int = Field(
+        default=3,
+        gt=0,
+        description=(
+            "Maximum Gemini generate_content requests per minute. "
+            "Free-tier limit is 10 RPM for gemini-2.5-flash; set conservatively."
+        ),
+    )
+    GEMINI_CONCURRENCY: int = Field(
+        default=1,
+        gt=0,
+        description="Maximum concurrent in-flight Gemini generate_content calls.",
+    )
 
     # OpenAI
     OPENAI_API_KEY: str = Field(default="", description="OpenAI API key.")
@@ -129,7 +142,7 @@ class Settings(BaseSettings):
 
     # Gemini Embeddings
     GEMINI_EMBEDDING_MODEL: str = Field(
-        default="text-embedding-004",
+        default="gemini-embedding-001",
         description="Gemini embedding model name.",
     )
 

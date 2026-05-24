@@ -67,18 +67,7 @@ class AgentExecutionService:
             metadata=request.metadata,
         )
 
-    def run_agent_mock(self, input: AgentInput) -> AgentOutput:
-        """
-        Always execute the agent using MockLLMProvider wrapper. Safe for offline tests.
-        """
-        from app.agents.registry import get_agent
-        agent = get_agent(input.agent_name, llm_service=self.llm_service)
-        output = agent.run_mock(input)
-        
-        # Attach execution_mode = "mock" in metadata
-        meta = dict(output.metadata) if output.metadata else {}
-        meta["execution_mode"] = "mock"
-        return output.model_copy(update={"metadata": meta})
+
 
     def run_agent_once(self, input: AgentInput) -> AgentOutput:
         """

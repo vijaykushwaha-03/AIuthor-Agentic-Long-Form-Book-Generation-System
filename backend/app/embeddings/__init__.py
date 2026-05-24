@@ -19,7 +19,6 @@ from app.embeddings.exceptions import (
 )
 from app.embeddings.base import BaseEmbeddingProvider
 from app.embeddings.providers import (
-    MockEmbeddingProvider,
     GeminiEmbeddingProvider,
     OpenAIEmbeddingProvider,
 )
@@ -38,7 +37,6 @@ __all__ = [
     # Base
     "BaseEmbeddingProvider",
     # Providers
-    "MockEmbeddingProvider",
     "GeminiEmbeddingProvider",
     "OpenAIEmbeddingProvider",
     # Factory

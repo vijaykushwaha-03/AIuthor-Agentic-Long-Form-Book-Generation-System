@@ -334,11 +334,16 @@ def writer_node(state: AIuthorWorkflowState) -> AIuthorWorkflowState:
     }
     new_steps = list(state.get("steps", [])) + [step_data]
     new_trace_steps = list(state.get("trace_steps", [])) + [step_data]
+    # If fact_checker_output already exists we are on a retry — increment counter
+    retry_count = state.get("retry_count", 0)
+    if state.get("fact_checker_output") is not None:
+        retry_count += 1
     return {
         **state,
         "writer_output": output_dict,
         "steps": new_steps,
         "trace_steps": new_trace_steps,
+        "retry_count": retry_count,
     }
 
 

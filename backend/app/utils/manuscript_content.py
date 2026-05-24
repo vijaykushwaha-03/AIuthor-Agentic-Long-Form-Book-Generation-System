@@ -1,4 +1,4 @@
-"""
+﻿"""
 AIuthor Backend — Manuscript Content Cleaning Utilities.
 
 Provides functions to strip code fences, parse JSON, validate against debug/mock output,
@@ -8,6 +8,70 @@ from __future__ import annotations
 
 import json
 import re
+
+# Ordered preference for prose field keys when LLM returns a dict or JSON object
+_PROSE_FIELD_PRIORITY = (
+    "final_text",
+    "chapter_text",
+    "prose",
+    "content",
+    "draft_text",
+    "text",
+    "body",
+    "passage",
+)
+
+
+def extract_prose_from_llm_response(raw):
+    """
+    Sanitize a raw LLM output string into clean book-style prose.
+
+    Handles three cases:
+
+    1. **JSON string / code-fence JSON**: Parse and extract the first matching
+       prose field (`final_text` > `chapter_text` > `prose` >
+       `content` > `draft_text` > `text` > `body` > `passage`).
+    2. **Plain string**: Return as-is after stripping outer whitespace.
+
+    Never raises -- always returns the best available string.
+
+    Args:
+        raw: Raw LLM response text (may be JSON, fenced JSON, or plain prose).
+
+    Returns:
+        Clean prose string ready for storing and exporting.
+    """
+    if not raw:
+        return raw or ""
+
+    stripped = raw.strip()
+
+    # Attempt JSON parse (with or without code fence)
+    parsed = try_parse_json_text(stripped)
+
+    if isinstance(parsed, dict):
+        for key in _PROSE_FIELD_PRIORITY:
+            val = parsed.get(key)
+            if val and isinstance(val, str) and val.strip():
+                return val.strip()
+        for val in parsed.values():
+            if isinstance(val, str) and val.strip():
+                return val.strip()
+        return stripped
+
+    if isinstance(parsed, list) and parsed:
+        for item in parsed:
+            if isinstance(item, str) and item.strip():
+                return item.strip()
+            if isinstance(item, dict):
+                for key in _PROSE_FIELD_PRIORITY:
+                    val = item.get(key)
+                    if val and isinstance(val, str) and val.strip():
+                        return val.strip()
+
+    return stripped
+
+
 
 def strip_markdown_code_fence(text: str) -> str:
     """
@@ -339,3 +403,4 @@ def extract_clean_chapter_manuscript(
     # All candidates failed
     warnings.append("All available text fields were empty, rejected, or contained debug dumps.")
     return "Content not available for this chapter.", "placeholder", warnings
+

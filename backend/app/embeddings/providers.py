@@ -1,8 +1,7 @@
 """
 AIuthor Backend — Concrete Embedding Provider Implementations.
 
-Three providers:
-  - MockEmbeddingProvider   — deterministic hash-based vectors, no external calls
+Two providers:
   - GeminiEmbeddingProvider — Google AI via google-genai SDK
   - OpenAIEmbeddingProvider — OpenAI via openai SDK
 
@@ -11,10 +10,7 @@ so they can be imported and introspected without network access.
 """
 from __future__ import annotations
 
-import hashlib
 import logging
-import math
-import struct
 from typing import Any
 
 from app.embeddings.base import BaseEmbeddingProvider
@@ -27,108 +23,6 @@ from app.embeddings.schemas import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-# ── MockEmbeddingProvider ─────────────────────────────────────────────────────
-
-class MockEmbeddingProvider(BaseEmbeddingProvider):
-    """
-    Deterministic hash-based embedding provider for tests and offline development.
-
-    - Makes no external network calls.
-    - Same text always produces the same vector.
-    - Different texts generally produce different vectors.
-    - Vector length always equals ``dimensions``.
-    - Values are in the range [-1.0, 1.0] and L2-normalised.
-    """
-
-    def __init__(
-        self,
-        model: str = "mock-embedding",
-        dims: int = 8,
-    ) -> None:
-        self._model = model
-        self._dimensions = dims
-
-    @property
-    def provider_name(self) -> str:
-        return "mock"
-
-    @property
-    def model_name(self) -> str:
-        return self._model
-
-    @property
-    def dimensions(self) -> int:
-        return self._dimensions
-
-    # ── Core helpers ──────────────────────────────────────────────────────────
-
-    def _text_to_vector(self, text: str) -> list[float]:
-        """
-        Convert text to a deterministic float vector via SHA-256.
-
-        Strategy:
-          1. Hash the UTF-8 bytes of the text.
-          2. Unpack the first ``dimensions * 4`` bytes as little-endian floats.
-          3. If the hash is too short, extend by hashing successive suffixes.
-          4. L2-normalise the resulting vector so magnitude == 1.
-        """
-        raw_bytes = bytearray()
-        seed = text.encode("utf-8")
-        # Keep hashing until we have enough bytes for `dimensions` float32s
-        counter = 0
-        while len(raw_bytes) < self._dimensions * 4:
-            digest = hashlib.sha256(seed + str(counter).encode()).digest()
-            raw_bytes.extend(digest)
-            counter += 1
-
-        # Unpack as signed 32-bit integers, scale to [-1, 1]
-        ints = struct.unpack_from(f"<{self._dimensions}i", bytes(raw_bytes[: self._dimensions * 4]))
-        floats = [i / (2**31 - 1) for i in ints]
-
-        # L2 normalise
-        magnitude = math.sqrt(sum(f * f for f in floats)) or 1.0
-        return [f / magnitude for f in floats]
-
-    def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:
-        dims = request.dimensions or self._dimensions
-        # Temporarily override dimensions for this request
-        original_dims = self._dimensions
-        self._dimensions = dims
-
-        items: list[EmbeddingItem] = []
-        for i, text in enumerate(request.texts):
-            vector = self._text_to_vector(text)
-            items.append(
-                EmbeddingItem(
-                    text_index=i,
-                    embedding=vector,
-                    token_count=self._estimate_token_count(text),
-                )
-            )
-
-        self._dimensions = original_dims  # restore
-
-        logger.debug("MockEmbeddingProvider.embed: %d texts → dim=%d", len(request.texts), dims)
-
-        return EmbeddingResponse(
-            provider=self.provider_name,
-            model=self.model_name,
-            dimensions=dims,
-            items=items,
-            metadata=request.metadata,
-        )
-
-    def get_info(self) -> EmbeddingProviderInfo:
-        return EmbeddingProviderInfo(
-            provider=self.provider_name,
-            model=self.model_name,
-            dimensions=self.dimensions,
-            configured=True,
-            supports_batching=True,
-        )
-
 
 # ── GeminiEmbeddingProvider ───────────────────────────────────────────────────
 

@@ -83,30 +83,9 @@ def handle_service_error(exc: Exception) -> None:
 
 
 @router.post(
-    "/generate/mock-run",
-    response_model=ChapterGenerationResponse,
-    summary="Execute mock chapter generation loop",
-    description="Synchronously runs the chapter generation loop using MockLLMProvider (offline).",
-)
-def generate_chapters_mock(
-    book_id: UUID,
-    request: ChapterGenerationRequest,
-    svc: ServiceDep,
-) -> ChapterGenerationResponse:
-    """
-    Synchronous offline mock chapter generation, enforcing book_id path validation.
-    """
-    request_copy = request.model_copy(update={"book_id": book_id, "execution_mode": "mock"})
-    try:
-        return svc.generate_chapters(request_copy)
-    except Exception as exc:
-        handle_service_error(exc)
-
-
-@router.post(
     "/generate/dev-run-real",
     response_model=ChapterGenerationResponse,
-    summary="Execute dev-real chapter generation loop (Gated)",
+    summary="Execute chapter generation loop",
     description="Synchronously runs the chapter generation loop using live Gemini/OpenAI.",
 )
 def generate_chapters_real_dev(
@@ -115,18 +94,8 @@ def generate_chapters_real_dev(
     svc: ServiceDep,
 ) -> ChapterGenerationResponse:
     """
-    Synchronous live chapter generation, gated by ENABLE_REAL_WORKFLOW_TEST_API.
+    Synchronous live chapter generation.
     """
-    settings = get_settings()
-    if not settings.enable_real_workflow_test_api:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "message": "Real workflow execution API is disabled in this environment.",
-                "code": "real_workflow_test_api_disabled",
-            },
-        )
-
     request_copy = request.model_copy(update={"book_id": book_id, "execution_mode": "real_dev"})
     try:
         return svc.generate_chapters(request_copy)

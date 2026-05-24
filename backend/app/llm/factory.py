@@ -11,11 +11,11 @@ import logging
 
 from app.llm.base import BaseLLMProvider
 from app.llm.exceptions import LLMConfigurationError
-from app.llm.providers import GeminiLLMProvider, MockLLMProvider, OpenAILLMProvider
+from app.llm.providers import GeminiLLMProvider, OpenAILLMProvider
 
 logger = logging.getLogger(__name__)
 
-_SUPPORTED_PROVIDERS = {"gemini", "openai", "mock"}
+_SUPPORTED_PROVIDERS = {"gemini", "openai"}
 
 
 def get_llm_provider(provider: str | None = None) -> BaseLLMProvider:
@@ -54,16 +54,13 @@ def get_llm_provider(provider: str | None = None) -> BaseLLMProvider:
 
     logger.debug("Creating LLM provider: %s", resolved)
 
-    if resolved == "mock":
-        return MockLLMProvider()
-
     if resolved == "gemini":
         api_key = settings.GEMINI_API_KEY
         if not api_key:
             raise LLMConfigurationError(
                 message=(
                     "GEMINI_API_KEY is not set. "
-                    "Add it to your .env file or set LLM_PROVIDER=mock for testing."
+                    "Add GEMINI_API_KEY to your .env file."
                 ),
                 provider="gemini",
             )
@@ -73,6 +70,9 @@ def get_llm_provider(provider: str | None = None) -> BaseLLMProvider:
             temperature=settings.LLM_TEMPERATURE,
             max_output_tokens=settings.LLM_MAX_OUTPUT_TOKENS,
             timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
+            enable_tools=False,           # AFC disabled for all prose generation
+            rpm=settings.GEMINI_RPM,
+            concurrency=settings.GEMINI_CONCURRENCY,
         )
 
     if resolved == "openai":
@@ -81,7 +81,7 @@ def get_llm_provider(provider: str | None = None) -> BaseLLMProvider:
             raise LLMConfigurationError(
                 message=(
                     "OPENAI_API_KEY is not set. "
-                    "Add it to your .env file or set LLM_PROVIDER=mock for testing."
+                    "Add OPENAI_API_KEY to your .env file."
                 ),
                 provider="openai",
             )

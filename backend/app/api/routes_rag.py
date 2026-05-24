@@ -52,7 +52,6 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.api.error_handlers import handle_service_error
 from app.db.pgvector_check import get_pgvector_status
-from app.embeddings.providers import MockEmbeddingProvider
 from app.schemas import (
     SourceDocumentCreate,
     SourceDocumentUpdate,

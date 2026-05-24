@@ -14,6 +14,9 @@ from app.models.memory import FactRegistry, ConceptBible, CharacterBible, Callba
 from app.models.observability import AgentTrace, PromptLog, TokenCostLedger
 from app.services.exceptions import NotFoundError
 from app.services.eval_service import EvalService
+from app.services.llm_service import LLMService
+from app.llm.schemas import LLMRequest, LLMMessage
+import json
 from app.services.book_assembler_service import BookAssemblerService
 from app.services.export_service import ExportService
 from app.services.memory_service import MemoryService
@@ -479,6 +482,181 @@ class EvaluationReportService:
 
         return checks
 
+    # ── AI Tells scorer ───────────────────────────────────────────────────────
+
+    def _check_ai_tells(self, book_id: UUID) -> list[EvaluationCheckItem]:
+        chapters = self.db.query(Chapter).filter(Chapter.book_id == book_id).all()
+        
+        if not chapters:
+            return [EvaluationCheckItem(
+                check_name="ai_tells_score", status="skipped", score=None,
+                message="No chapter text to evaluate.", details={},
+            )]
+            
+        llm = LLMService()
+        scores = []
+        details = []
+        
+        # We will randomly sample up to 3 chapters if the book is large to save time
+        sample_chapters = chapters[:3]
+        
+        for ch in sample_chapters:
+            text = (ch.final_text or ch.humanized_text or ch.draft_text or "").strip()
+            if not text:
+                continue
+            
+            # Use only the first 1000 words to save tokens
+            text_snippet = " ".join(text.split()[:1000])
+            
+            prompt = (
+                "You are an expert editor. Score the following text for 'AI Tells' (cliche phrases like "
+                "'it is worth noting', 'delve into', 'in conclusion', 'leverage', 'testament to').\n"
+                "Output ONLY a valid JSON object with:\n"
+                "- score: float between 0.0 (very bad, many AI tells) and 1.0 (perfect, no AI tells)\n"
+                "- rationale: brief explanation of your score\n\n"
+                f"Text:\n{text_snippet}"
+            )
+            
+            try:
+                resp = llm.generate_text(LLMRequest(
+                    messages=[LLMMessage(role="user", content=prompt)]
+                ))
+                content = resp.content.strip()
+                if content.startswith("```json"): content = content[7:]
+                if content.endswith("```"): content = content[:-3]
+                
+                result = json.loads(content.strip())
+                ch_score = float(result.get("score", 0.0))
+                scores.append(ch_score)
+                details.append({
+                    "chapter": ch.chapter_number, 
+                    "score": ch_score, 
+                    "rationale": result.get("rationale", "")
+                })
+            except Exception as e:
+                logger.error(f"AI Tells Judge failed: {e}")
+        
+        if not scores:
+            return [EvaluationCheckItem(
+                check_name="ai_tells_score", status="skipped", score=None,
+                message="LLM Judge failed or no text evaluated.", details={}
+            )]
+            
+        avg_score = sum(scores) / len(scores)
+        status = "pass" if avg_score >= 0.8 else ("warning" if avg_score >= 0.5 else "fail")
+        
+        return [EvaluationCheckItem(
+            check_name="ai_tells_score",
+            status=status,
+            score=round(avg_score, 3),
+            message=f"LLM-as-Judge AI-Tells score: {avg_score:.2f} across {len(scores)} chapter(s).",
+            details={"chapter_scores": details},
+        )]
+
+    # ── Tone consistency scorer ───────────────────────────────────────────────
+
+    def _check_tone_consistency(self, book_id: UUID) -> list[EvaluationCheckItem]:
+        """
+        Uses LLM-as-Judge to score how well the chapters adhere to the declared tone preset.
+        """
+        book = self.db.get(BookProject, book_id)
+        declared_tone = (book.tone or "").lower() if book else ""
+
+        chapters = self.db.query(Chapter).filter(Chapter.book_id == book_id).order_by(Chapter.chapter_number).all()
+
+        if not chapters or not declared_tone:
+            return [EvaluationCheckItem(
+                check_name="tone_consistency_score", status="skipped", score=None,
+                message="No chapters or no declared tone to evaluate.", details={},
+            )]
+
+        llm = LLMService()
+        scores = []
+        details = []
+        
+        sample_chapters = chapters[:3]
+
+        for ch in sample_chapters:
+            text = (ch.final_text or ch.humanized_text or ch.draft_text or "").strip()
+            if not text:
+                continue
+                
+            text_snippet = " ".join(text.split()[:1000])
+            
+            prompt = (
+                f"You are a literary critic. The author intended this book to be written with a strictly '{declared_tone}' tone.\n"
+                "Evaluate the text snippet and score how well it adheres to this requested tone.\n"
+                "Output ONLY a valid JSON object with:\n"
+                "- score: float between 0.0 (completely fails the tone) and 1.0 (perfectly captures the tone)\n"
+                "- rationale: brief explanation of your score\n\n"
+                f"Text:\n{text_snippet}"
+            )
+            
+            try:
+                resp = llm.generate_text(LLMRequest(
+                    messages=[LLMMessage(role="user", content=prompt)]
+                ))
+                content = resp.content.strip()
+                if content.startswith("```json"): content = content[7:]
+                if content.endswith("```"): content = content[:-3]
+                
+                result = json.loads(content.strip())
+                ch_score = float(result.get("score", 0.0))
+                scores.append(ch_score)
+                details.append({
+                    "chapter": ch.chapter_number, 
+                    "score": ch_score, 
+                    "rationale": result.get("rationale", "")
+                })
+            except Exception as e:
+                logger.error(f"Tone Judge failed: {e}")
+
+        if not scores:
+            return [EvaluationCheckItem(
+                check_name="tone_consistency_score", status="skipped", score=None,
+                message="LLM Judge failed or no chapter text available.", details={},
+            )]
+
+        avg_score = sum(scores) / len(scores)
+        status = "pass" if avg_score >= 0.7 else ("warning" if avg_score >= 0.4 else "fail")
+
+        return [EvaluationCheckItem(
+            check_name="tone_consistency_score",
+            status=status,
+            score=round(avg_score, 3),
+            message=f"LLM-as-Judge Tone '{declared_tone}' fidelity score: {avg_score:.2f} across {len(scores)} chapter(s).",
+            details={"declared_tone": declared_tone, "chapter_scores": details},
+        )]
+
+    # ── Fact grounding scorer ─────────────────────────────────────────────────
+
+    def _check_fact_grounding(self, book_id: UUID) -> list[EvaluationCheckItem]:
+        """
+        Measures what fraction of stored facts have a source_chunk_id (are grounded).
+        """
+        facts = self.db.query(FactRegistry).filter(FactRegistry.book_id == book_id).all()
+
+        if not facts:
+            return [EvaluationCheckItem(
+                check_name="fact_grounding_score",
+                status="skipped",
+                score=None,
+                message="No facts in FactRegistry to evaluate.",
+                details={},
+            )]
+
+        grounded = [f for f in facts if f.source_chunk_id is not None]
+        score = len(grounded) / len(facts)
+        status = "pass" if score >= 0.7 else ("warning" if score >= 0.4 else "fail")
+
+        return [EvaluationCheckItem(
+            check_name="fact_grounding_score",
+            status=status,
+            score=round(score, 3),
+            message=f"{len(grounded)}/{len(facts)} facts are grounded with a source chunk reference.",
+            details={"total_facts": len(facts), "grounded_facts": len(grounded), "ungrounded_facts": len(facts) - len(grounded)},
+        )]
+
     def _check_memory(self, book_id: UUID) -> list[EvaluationCheckItem]:
         checks = []
         facts_count = self.db.query(FactRegistry).filter(FactRegistry.book_id == book_id).count()
@@ -597,6 +775,16 @@ class EvaluationReportService:
             lines.append("No memory checks executed.")
         lines.append("")
 
+        lines.append("## Quality Scores")
+        quality_checks = [c for c in checks if c.check_name in ("ai_tells_score", "tone_consistency_score", "fact_grounding_score")]
+        if quality_checks:
+            for c in quality_checks:
+                score_str = f"{c.score:.3f}" if c.score is not None else "N/A"
+                lines.append(f"- **{c.check_name}** ({c.status.upper()}) score={score_str}: {c.message}")
+        else:
+            lines.append("No quality scores evaluated.")
+        lines.append("")
+
         # Recommendations
         lines.append("## Recommendations")
         if failed > 0:
@@ -623,6 +811,11 @@ class EvaluationReportService:
             checks.extend(self._check_traces(request.book_id, request.run_id))
         if request.include_memory_checks:
             checks.extend(self._check_memory(request.book_id))
+        # Quality scorers — always run when chapter checks are enabled
+        if request.include_chapter_checks:
+            checks.extend(self._check_ai_tells(request.book_id))
+            checks.extend(self._check_tone_consistency(request.book_id))
+            checks.extend(self._check_fact_grounding(request.book_id))
 
         total_checks = len(checks)
         pass_count = sum(1 for c in checks if c.status == "pass")

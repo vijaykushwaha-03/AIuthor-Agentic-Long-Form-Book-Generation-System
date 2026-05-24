@@ -13,13 +13,12 @@ from app.embeddings.base import BaseEmbeddingProvider
 from app.embeddings.exceptions import EmbeddingConfigurationError
 from app.embeddings.providers import (
     GeminiEmbeddingProvider,
-    MockEmbeddingProvider,
     OpenAIEmbeddingProvider,
 )
 
 logger = logging.getLogger(__name__)
 
-_SUPPORTED_PROVIDERS = {"gemini", "openai", "mock"}
+_SUPPORTED_PROVIDERS = {"gemini", "openai"}
 
 
 def get_embedding_provider(provider: str | None = None) -> BaseEmbeddingProvider:
@@ -58,10 +57,6 @@ def get_embedding_provider(provider: str | None = None) -> BaseEmbeddingProvider
 
     logger.debug("Creating embedding provider: %s", resolved)
 
-    if resolved == "mock":
-        return MockEmbeddingProvider(
-            dims=settings.EMBEDDING_DIMENSIONS,
-        )
 
     if resolved == "gemini":
         api_key = settings.GEMINI_API_KEY
@@ -69,7 +64,7 @@ def get_embedding_provider(provider: str | None = None) -> BaseEmbeddingProvider
             raise EmbeddingConfigurationError(
                 message=(
                     "GEMINI_API_KEY is not set. "
-                    "Add it to your .env file or set EMBEDDING_PROVIDER=mock for testing."
+                    "Add GEMINI_API_KEY to your .env file."
                 ),
                 provider="gemini",
             )
@@ -86,7 +81,7 @@ def get_embedding_provider(provider: str | None = None) -> BaseEmbeddingProvider
             raise EmbeddingConfigurationError(
                 message=(
                     "OPENAI_API_KEY is not set. "
-                    "Add it to your .env file or set EMBEDDING_PROVIDER=mock for testing."
+                    "Add OPENAI_API_KEY to your .env file."
                 ),
                 provider="openai",
             )

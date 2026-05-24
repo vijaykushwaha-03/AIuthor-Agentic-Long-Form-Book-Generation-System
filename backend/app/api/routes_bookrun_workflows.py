@@ -86,31 +86,9 @@ def handle_service_error(exc: Exception) -> None:
 
 
 @router.post(
-    "/mock-run",
-    response_model=BookRunWorkflowResponse,
-    summary="Execute BookProject workflow in Mock mode",
-    description="Synchronously runs the sequential multi-agent LangGraph workflow using MockLLMProvider.",
-)
-def run_book_workflow_mock(
-    book_id: UUID,
-    request: BookRunWorkflowRequest,
-    svc: ServiceDep,
-) -> BookRunWorkflowResponse:
-    """
-    Triggers synchronous offline mock multi-agent execution, securing path book_id parameters.
-    """
-    # Enforce mock execution mode regardless of request payload
-    request_copy = request.model_copy(update={"book_id": book_id, "execution_mode": "mock"})
-    try:
-        return svc.run_book_workflow(request_copy)
-    except Exception as exc:
-        handle_service_error(exc)
-
-
-@router.post(
     "/dev-run-real",
     response_model=BookRunWorkflowResponse,
-    summary="Execute BookProject workflow in Real mode (Gated)",
+    summary="Execute BookProject workflow",
     description="Synchronously runs the multi-agent LangGraph workflow using live Gemini/OpenAI APIs.",
 )
 def run_book_workflow_real_dev(
@@ -119,18 +97,8 @@ def run_book_workflow_real_dev(
     svc: ServiceDep,
 ) -> BookRunWorkflowResponse:
     """
-    Triggers live multi-agent execution. Gated by ENABLE_REAL_WORKFLOW_TEST_API.
+    Triggers live multi-agent execution.
     """
-    settings = get_settings()
-    if not settings.enable_real_workflow_test_api:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "message": "Real workflow execution API is disabled in this environment.",
-                "code": "real_workflow_test_api_disabled",
-            },
-        )
-
     # Force execution mode = real_dev
     request_copy = request.model_copy(update={"book_id": book_id, "execution_mode": "real_dev"})
     try:
