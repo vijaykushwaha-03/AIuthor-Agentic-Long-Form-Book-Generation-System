@@ -150,6 +150,10 @@ def create_app() -> FastAPI:
     if os.path.exists(static_dir):
         app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+    storage_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "storage")
+    if os.path.exists(storage_dir):
+        app.mount("/storage", StaticFiles(directory=storage_dir), name="storage")
+
     @app.get("/")
     async def serve_frontend():
         index_file = os.path.join(static_dir, "index.html")
@@ -161,10 +165,11 @@ def create_app() -> FastAPI:
 
 
     # ── Admin Dashboard ──────────────────────────────────────────────────────
-
-
-    from app.admin import setup_admin
-    setup_admin(app)
+    try:
+        from app.admin import setup_admin
+        setup_admin(app)
+    except ImportError:
+        logger.warning("sqladmin not installed, admin dashboard disabled")
 
     return app
 

@@ -17,7 +17,6 @@ from app.models import BookProject, BookRun, Chapter, BookSection, ExportFile
 from app.models.memory import FactRegistry, ConceptBible, CharacterBible, CallbackIndex, ToneFingerprint, DecisionLog
 from app.models.observability import AgentTrace, PromptLog, TokenCostLedger
 from app.agents.prompt_registry import PromptRegistry
-from app.workflows.graph import REGISTERED_WORKFLOWS
 from app.workflows.schemas import (
     BackendReadinessCheckItem,
     BackendReadinessReportRequest,
@@ -221,6 +220,7 @@ class BackendReadinessService:
         return checks
 
     def _check_workflows(self) -> list[BackendReadinessCheckItem]:
+        from app.workflows.graph import REGISTERED_WORKFLOWS
         checks = []
         expected_workflows = {
             "mini_book_pipeline": 5,
