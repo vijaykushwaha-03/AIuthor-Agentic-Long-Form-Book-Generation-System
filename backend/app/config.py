@@ -83,6 +83,13 @@ class Settings(BaseSettings):
         description="OpenAI model name (e.g. gpt-4o-mini, gpt-4o).",
     )
 
+    # OpenRouter
+    OPENROUTER_API_KEY: str = Field(default="", description="OpenRouter API key.")
+    OPENROUTER_MODEL: str = Field(
+        default="meta-llama/llama-3.3-70b-instruct:free",
+        description="OpenRouter model name.",
+    )
+
     # Shared tunables
     LLM_TEMPERATURE: float = Field(
         default=0.7,
@@ -128,7 +135,7 @@ class Settings(BaseSettings):
     @field_validator("LLM_PROVIDER")
     @classmethod
     def validate_llm_provider(cls, v: str) -> str:
-        valid = {"gemini", "openai", "mock"}
+        valid = {"gemini", "openai", "mock", "openrouter"}
         lower = v.lower()
         if lower not in valid:
             raise ValueError(f"LLM_PROVIDER must be one of {valid}, got '{v}'")

@@ -1,0 +1,56 @@
+{
+  "artifacts": [
+    {
+      "artifact_type": "evaluation_report",
+      "error_message": null,
+      "file_name": "evaluation_report.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/9502e64e-c531-420d-bddf-5b6aba3f14ac/manual/evaluation_report.md",
+      "file_size_bytes": 3342,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "prompt_dossier",
+      "error_message": null,
+      "file_name": "prompt_dossier.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/9502e64e-c531-420d-bddf-5b6aba3f14ac/manual/prompt_dossier.md",
+      "file_size_bytes": 20992,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "architecture_summary",
+      "error_message": null,
+      "file_name": "architecture_summary.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/9502e64e-c531-420d-bddf-5b6aba3f14ac/manual/architecture_summary.md",
+      "file_size_bytes": 1371,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "memory_report",
+      "error_message": null,
+      "file_name": "memory_report.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/9502e64e-c531-420d-bddf-5b6aba3f14ac/manual/memory_report.md",
+      "file_size_bytes": 366,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "trace_summary",
+      "error_message": null,
+      "file_name": "trace_summary.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/9502e64e-c531-420d-bddf-5b6aba3f14ac/manual/trace_summary.md",
+      "file_size_bytes": 886,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "export_summary",
+      "error_message": null,
+      "file_name": "export_summary.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/9502e64e-c531-420d-bddf-5b6aba3f14ac/manual/export_summary.md",
+      "file_size_bytes": 424,
+      "status": "ready"
+    }
+  ],
+  "book_id": "9502e64e-c531-420d-bddf-5b6aba3f14ac",
+  "generated_at": "2026-05-24T06:42:54.926234",
+  "run_id": "manual",
+  "status": "success"
+}

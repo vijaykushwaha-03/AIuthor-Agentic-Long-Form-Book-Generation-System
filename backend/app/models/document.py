@@ -12,13 +12,19 @@ from app.models.base import GUID, TimestampMixin, UUIDPrimaryKeyMixin
 if TYPE_CHECKING:
     from app.models.book import BookProject
 
-from pgvector.sqlalchemy import Vector as PgVector
+try:
+    from pgvector.sqlalchemy import Vector as PgVector
+except ImportError:
+    PgVector = None
 
 # Dimensions used for stored RAG vectors.
 # Must match settings.RAG_VECTOR_DIMENSIONS (default 768).
 _RAG_VECTOR_DIMENSIONS = 768
 
-_VECTOR_TYPE = PgVector(_RAG_VECTOR_DIMENSIONS).with_variant(JSON, "sqlite")
+if PgVector:
+    _VECTOR_TYPE = PgVector(_RAG_VECTOR_DIMENSIONS).with_variant(JSON, "sqlite")
+else:
+    _VECTOR_TYPE = JSON
 
 
 class SourceDocument(UUIDPrimaryKeyMixin, TimestampMixin, Base):

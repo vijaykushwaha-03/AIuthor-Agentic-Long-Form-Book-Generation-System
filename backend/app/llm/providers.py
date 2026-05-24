@@ -444,3 +444,130 @@ class OpenAILLMProvider(BaseLLMProvider):
             configured=bool(self._api_key),
             supports_streaming=False,
         )
+
+
+# ── OpenRouterLLMProvider ─────────────────────────────────────────────────────
+
+class OpenRouterLLMProvider(BaseLLMProvider):
+    """
+    OpenRouter provider using the official openai SDK with a custom base URL.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "google/gemini-2.5-flash:free",
+        temperature: float = 0.7,
+        max_output_tokens: int = 4000,
+        timeout_seconds: int = 60,
+    ) -> None:
+        if not api_key or not api_key.strip():
+            raise LLMConfigurationError(
+                message="OpenRouter API key is required but was not provided.",
+                provider="openrouter",
+            )
+        self._api_key = api_key
+        self._model = model
+        self._temperature = temperature
+        self._max_output_tokens = max_output_tokens
+        self._timeout_seconds = timeout_seconds
+
+    @property
+    def provider_name(self) -> str:
+        return "openrouter"
+
+    @property
+    def model_name(self) -> str:
+        return self._model
+
+    def generate(self, request: LLMRequest) -> LLMResponse:
+        """Call the OpenRouter API via OpenAI client and return a normalised LLMResponse."""
+        try:
+            import openai  # type: ignore[import]
+        except ImportError as exc:
+            raise LLMProviderError(
+                message="openai package is not installed. Run: pip install openai",
+                provider="openrouter",
+            ) from exc
+
+        model_to_use = request.model or self._model
+        temperature = request.temperature if request.temperature is not None else self._temperature
+        max_tokens = request.max_output_tokens or self._max_output_tokens
+
+        messages: list[dict[str, Any]] = [
+            {"role": msg.role, "content": msg.content}
+            for msg in request.messages
+        ]
+
+        logger.debug(
+            "OpenRouterLLMProvider.generate: model=%s temperature=%.2f max_tokens=%d",
+            model_to_use, temperature, max_tokens,
+        )
+
+        try:
+            client = openai.OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=self._api_key, 
+                timeout=self._timeout_seconds
+            )
+            # Use retry loop to handle 429
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    completion = client.chat.completions.create(
+                        model=model_to_use,
+                        messages=messages,  # type: ignore[arg-type]
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        extra_headers={
+                            "HTTP-Referer": "http://localhost:8000", # Optional
+                            "X-Title": "AIuthor", # Optional
+                        }
+                    )
+                    break
+                except Exception as e:
+                    import time
+                    if "429" in str(e) and attempt < max_retries - 1:
+                        logger.warning(f"OpenRouter 429 Rate Limit. Retrying in 15s... (Attempt {attempt+1}/{max_retries})")
+                        time.sleep(15)
+                    else:
+                        raise e
+        except Exception as exc:
+            raise LLMProviderError(
+                message=f"OpenRouter API call failed: {exc}",
+                provider="openrouter",
+                details={"error": str(exc)},
+            ) from exc
+
+        try:
+            content = completion.choices[0].message.content or ""
+        except (IndexError, AttributeError):
+            content = ""
+
+        input_tokens, output_tokens, total_tokens = None, None, None
+        try:
+            usage = completion.usage
+            if usage:
+                input_tokens = getattr(usage, "prompt_tokens", None)
+                output_tokens = getattr(usage, "completion_tokens", None)
+                total_tokens = getattr(usage, "total_tokens", None)
+        except Exception:
+            pass
+
+        return LLMResponse(
+            provider=self.provider_name,
+            model=model_to_use,
+            content=content,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens,
+            metadata=request.metadata,
+        )
+
+    def get_info(self) -> LLMProviderInfo:
+        return LLMProviderInfo(
+            provider=self.provider_name,
+            model=self.model_name,
+            configured=bool(self._api_key),
+            supports_streaming=False,
+        )

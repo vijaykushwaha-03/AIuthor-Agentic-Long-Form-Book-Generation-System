@@ -6,12 +6,7 @@ import json, sys
 import httpx
 
 BASE = "http://127.0.0.1:8000"
-client = httpx.Client(base_url=BASE, timeout=httpx.Timeout(
-    connect=30,
-    read=1200,
-    write=1200,
-    pool=30,
-))
+client = httpx.Client(base_url=BASE, timeout=300)
 
 def post(path, body):
     r = client.post(path, json=body)
@@ -74,12 +69,6 @@ gen = post(f"/api/books/{book_id}/chapters/generate/dev-run-real", {
     "build_context_pack": False,
     "persist_chapter_content": True,
     "overwrite_existing": True,
-    "payload": {
-        "provider": "openrouter",
-        "max_chapter_words": 500,
-        "max_sections": 1,
-        "assessment_mode": True
-    }
 })
 run_id = gen.get("run_id")
 print(f"    run_id: {run_id}")

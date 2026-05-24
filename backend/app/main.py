@@ -16,7 +16,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+import os
 
 from app.api.routes_health import router as health_router
 from app.api.routes_books import router as books_router
@@ -142,6 +144,18 @@ def create_app() -> FastAPI:
     app.include_router(chapter_self_healing_router)
     app.include_router(memory_extraction_router)
     app.include_router(backend_qa_router)
+
+    # ── Static Files & Frontend ──────────────────────────────────────────────
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+    if os.path.exists(static_dir):
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+    @app.get("/")
+    async def serve_frontend():
+        index_file = os.path.join(static_dir, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        return {"message": "AIuthor API - Frontend not found"}
 
 
 

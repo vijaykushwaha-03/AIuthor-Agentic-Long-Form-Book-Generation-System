@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina AI Author | Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary": "#006591",
+                      "error": "#ba1a1a",
+                      "primary-fixed": "#e2dfff",
+                      "on-surface": "#0b1c30",
+                      "on-secondary-fixed-variant": "#004c6e",
+                      "surface-bright": "#f8f9ff",
+                      "primary": "#3525cd",
+                      "background": "#f8f9ff",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container": "#e5eeff",
+                      "secondary-fixed": "#c9e6ff",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#eff4ff",
+                      "on-secondary-container": "#004666",
+                      "inverse-primary": "#c3c0ff",
+                      "on-background": "#0b1c30",
+                      "surface-tint": "#4d44e3",
+                      "surface-dim": "#cbdbf5",
+                      "on-primary-fixed": "#0f0069",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "secondary-container": "#39b8fd",
+                      "inverse-surface": "#213145",
+                      "on-tertiary-fixed": "#351000",
+                      "surface": "#f8f9ff",
+                      "tertiary-fixed": "#ffdbcc",
+                      "tertiary": "#7e3000",
+                      "secondary-fixed-dim": "#89ceff",
+                      "surface-container-high": "#dce9ff",
+                      "tertiary-fixed-dim": "#ffb695",
+                      "on-error": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "outline": "#777587",
+                      "on-tertiary-fixed-variant": "#7b2f00",
+                      "inverse-on-surface": "#eaf1ff",
+                      "primary-fixed-dim": "#c3c0ff",
+                      "outline-variant": "#c7c4d8",
+                      "on-primary-container": "#dad7ff",
+                      "on-surface-variant": "#464555",
+                      "on-secondary": "#ffffff",
+                      "tertiary-container": "#a44100",
+                      "surface-container-highest": "#d3e4fe",
+                      "primary-container": "#4f46e5",
+                      "surface-variant": "#d3e4fe",
+                      "on-tertiary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed": "#001e2f",
+                      "on-tertiary-container": "#ffd2be"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "sm": "1rem",
+                      "xs": "0.5rem",
+                      "xl": "4rem",
+                      "gutter": "1.5rem",
+                      "base": "4px",
+                      "margin": "2rem",
+                      "md": "1.5rem",
+                      "lg": "2.5rem"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-md": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .writing-canvas-shadow {
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .ai-progress-gradient {
+            background: linear-gradient(90deg, #4F46E5 0%, #0EA5E9 100%);
+        }
+      </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-fixed">
+<!-- SideNavBar (Authority Source: JSON) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low flex flex-col py-md px-sm gap-xs z-50">
+<div class="mb-lg px-xs">
+<h1 class="font-headline-sm text-headline-sm font-semibold text-primary">Project Canvas</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Silent Co-Author</p>
+</div>
+<nav class="flex-1 space-y-xs">
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-primary font-semibold bg-primary-fixed/10 cursor-pointer transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high cursor-pointer transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+<span class="font-label-md text-label-md">My Library</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high cursor-pointer transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-xs space-y-sm">
+<button class="w-full bg-primary-container text-on-primary py-xs rounded-lg font-label-md text-label-md hover:bg-primary transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                New Draft
+            </button>
+<a class="flex items-center gap-sm px-sm py-xs text-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span class="font-label-md text-label-md">Help Center</span>
+</a>
+</div>
+</aside>
+<!-- TopAppBar (Authority Source: JSON) -->
+<header class="w-full top-0 sticky bg-surface flex justify-between items-center px-lg py-sm border-b border-outline-variant z-40 ml-64 max-w-[calc(100%-16rem)]">
+<div class="flex items-center gap-lg">
+<span class="font-headline-md text-headline-md font-bold text-primary">Lumina AI Author</span>
+<div class="hidden md:flex gap-md">
+<a class="font-body-md text-body-md text-primary font-bold border-b-2 border-primary cursor-pointer" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Community</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Support</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors" data-icon="notifications">notifications</span>
+<div class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors" data-icon="help">help</span>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden border border-outline-variant">
+<img alt="User profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNh9zAhkSueqbG5qt3YMBe60spsyXMWfGuPN3X34AUkgClwxdvTn8u8RTB_rN9ak_jH3oyRj4voBN7BxFF2w2szVjFCeqc4FgsR7dApfru4REiAdlMOLevtCP2Hu2p9NB3UVYZ4qaCx4-MR1sfq9FkpnD_rlDykSn8LgGXvXhhgM_vNHZmg-FgJQ5NMJJ52ckx-atKNyLctipYWaZJRz6CbQBLjhkbjkrl6Kvlacph1sgeDU_epg-TX1sfqVXpBjGcnt2gf8yq2Sc"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-lg max-w-[1200px] mx-auto">
+<header class="mb-lg">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Authoring Dashboard</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Configure your narrative parameters and monitor active literary generations.</p>
+</header>
+<!-- Start New Book Section -->
+<section class="mb-xl">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg writing-canvas-shadow">
+<div class="flex items-center gap-xs mb-md">
+<span class="material-symbols-outlined text-primary" data-icon="auto_stories">auto_stories</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Start New Book</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Topic -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Topic</label>
+<input id="topic-input" class="w-full h-[48px] px-sm border border-outline-variant rounded-lg focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all" placeholder="e.g., The Future of Quantum Computing" type="text"/>
+</div>
+<!-- Genre -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Genre</label>
+<input id="genre-input" class="w-full h-[48px] px-sm border border-outline-variant rounded-lg focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all" placeholder="e.g., Non-fiction / Technology" type="text"/>
+</div>
+<!-- Reader Profile -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Reader Profile</label>
+<input id="reader-profile-input" class="w-full h-[48px] px-sm border border-outline-variant rounded-lg focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all" placeholder="e.g., Tech-savvy professionals" type="text"/>
+</div>
+<!-- Tonality Dropdown -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Tonality</label>
+<select id="tonality-input" class="w-full h-[48px] px-sm border border-outline-variant rounded-lg focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all bg-white appearance-none cursor-pointer">
+<option value="CONVERSATIONAL">Conversational</option>
+<option value="ACADEMIC">Academic</option>
+<option value="STORYTELLER">Storyteller</option>
+<option value="MOTIVATIONAL">Motivational</option>
+<option value="WITTY">Witty</option>
+</select>
+</div>
+<!-- Target Chapters -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Target Chapters</label>
+<input id="chapters-input" class="w-full h-[48px] px-sm border border-outline-variant rounded-lg focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all" type="number" value="12"/>
+</div>
+<!-- Words per Chapter -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Words per Chapter</label>
+<input id="words-input" class="w-full h-[48px] px-sm border border-outline-variant rounded-lg focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all" type="number" value="2500"/>
+</div>
+</div>
+<div class="mt-lg flex justify-end">
+<button id="generate-btn" class="bg-primary-container text-on-primary px-lg py-md rounded-lg font-label-md text-label-md flex items-center gap-sm hover:bg-primary transition-all transform active:scale-95 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+                        Generate Book
+                    </button>
+</div>
+</div>
+</section>
+<!-- Current Generation Status -->
+<section class="mb-xl grid grid-cols-1 lg:grid-cols-3 gap-md">
+<div class="lg:col-span-2 bg-white border border-outline-variant rounded-xl p-md writing-canvas-shadow relative overflow-hidden">
+<div class="flex justify-between items-start mb-md">
+<div>
+<span class="bg-primary-fixed/30 text-on-primary-fixed-variant px-xs py-[2px] rounded font-label-sm text-label-sm uppercase tracking-wider">Active Process</span>
+<h3 class="font-headline-md text-headline-md mt-xs">Chapter 4: The Neural Revolution...</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">AI is currently drafting detailed narrative sections.</p>
+</div>
+<div class="text-right">
+<span class="font-headline-md text-headline-md text-primary">60%</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Completion Rate</p>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-surface-container-low rounded-full mb-lg overflow-hidden">
+<div class="h-full ai-progress-gradient transition-all duration-1000 ease-in-out" style="width: 60%"></div>
+</div>
+<!-- Step Indicator -->
+<div class="flex justify-between items-center relative">
+<div class="absolute top-4 left-0 w-full h-[2px] bg-surface-container-low -z-10"></div>
+<div class="flex flex-col items-center gap-xs">
+<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="check">check</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary">Planner</span>
+</div>
+<div class="flex flex-col items-center gap-xs">
+<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="check">check</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary">Researcher</span>
+</div>
+<div class="flex flex-col items-center gap-xs">
+<div class="w-8 h-8 rounded-full bg-primary-fixed border-2 border-primary text-primary flex items-center justify-center animate-pulse">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit_note">edit_note</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-bold">Writer</span>
+</div>
+<div class="flex flex-col items-center gap-xs opacity-40">
+<div class="w-8 h-8 rounded-full bg-surface-container-low border-2 border-outline-variant text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="rate_review">rate_review</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Editor</span>
+</div>
+</div>
+</div>
+<!-- AI Context Card -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-md flex flex-col justify-center gap-sm">
+<h4 class="font-label-sm text-label-sm text-on-surface-variant uppercase">Current Parameters</h4>
+<div class="flex flex-wrap gap-xs">
+<div class="bg-surface-container-highest px-xs py-[4px] rounded-full flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="psychology">psychology</span>
+<span class="font-label-md text-label-md">Modern Ethics</span>
+</div>
+<div class="bg-surface-container-highest px-xs py-[4px] rounded-full flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="campaign">campaign</span>
+<span class="font-label-md text-label-md">Witty</span>
+</div>
+<div class="bg-surface-container-highest px-xs py-[4px] rounded-full flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="group">group</span>
+<span class="font-label-md text-label-md">Scholars</span>
+</div>
+</div>
+<div class="mt-xs p-xs bg-white/50 rounded-lg border border-outline-variant/30">
+<p class="font-label-sm text-label-sm text-on-surface-variant italic">"Integrating neural network ethics with societal impact studies in Chapter 4..."</p>
+</div>
+</div>
+</section>
+<!-- Recent Books Section -->
+<section>
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-md text-headline-md text-on-surface">Recent Manuscripts</h3>
+<button class="text-primary font-label-md text-label-md hover:underline">View All Library</button>
+</div>
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden writing-canvas-shadow">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="px-md py-sm font-label-sm text-label-sm text-on-surface-variant">MANUSCRIPT</th>
+<th class="px-md py-sm font-label-sm text-label-sm text-on-surface-variant">GENERATED</th>
+<th class="px-md py-sm font-label-sm text-label-sm text-on-surface-variant">METRICS</th>
+<th class="px-md py-sm font-label-sm text-label-sm text-on-surface-variant text-right">EXPORT</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Item 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-md py-md flex items-center gap-sm">
+<div class="w-10 h-14 bg-surface-container border border-outline-variant rounded shadow-sm flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-outline" data-icon="book">book</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">The Silicon Mind</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Tech &amp; Ethics</p>
+</div>
+</td>
+<td class="px-md py-md font-label-md text-label-md text-on-surface-variant">Oct 12, 2024</td>
+<td class="px-md py-md">
+<span class="bg-secondary-container/20 text-on-secondary-container px-xs py-1 rounded font-label-sm text-label-sm">12.4k words</span>
+</td>
+<td class="px-md py-md text-right">
+<div class="flex justify-end gap-xs">
+<button class="px-xs py-1 border border-outline-variant rounded hover:bg-surface-container transition-all flex items-center gap-xs font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+                                        PDF
+                                    </button>
+<button class="px-xs py-1 border border-outline-variant rounded hover:bg-surface-container transition-all flex items-center gap-xs font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="description">description</span>
+                                        DOCX
+                                    </button>
+</div>
+</td>
+</tr>
+<!-- Item 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-md py-md flex items-center gap-sm">
+<div class="w-10 h-14 bg-surface-container border border-outline-variant rounded shadow-sm flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-outline" data-icon="book">book</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Modern Ethics in AI</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Philosophical Study</p>
+</div>
+</td>
+<td class="px-md py-md font-label-md text-label-md text-on-surface-variant">Oct 08, 2024</td>
+<td class="px-md py-md">
+<span class="bg-secondary-container/20 text-on-secondary-container px-xs py-1 rounded font-label-sm text-label-sm">8.9k words</span>
+</td>
+<td class="px-md py-md text-right">
+<div class="flex justify-end gap-xs">
+<button class="px-xs py-1 border border-outline-variant rounded hover:bg-surface-container transition-all flex items-center gap-xs font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+                                        PDF
+                                    </button>
+<button class="px-xs py-1 border border-outline-variant rounded hover:bg-surface-container transition-all flex items-center gap-xs font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="description">description</span>
+                                        DOCX
+                                    </button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<!-- Footer (Authority Source: JSON) -->
+<footer class="w-full mt-auto border-t border-outline-variant flex justify-between items-center px-lg py-md ml-64 max-w-[calc(100%-16rem)] bg-surface text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-md">
+<span>© 2024 Lumina AI Authoring Systems</span>
+<div class="flex gap-sm">
+<a class="hover:text-primary transition-opacity underline" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-opacity underline" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-opacity underline" href="#">API Status</a>
+</div>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant/60">
+<span class="material-symbols-outlined text-[16px]" data-icon="security">security</span>
+            Secure Environment
+        </div>
+</footer>
+<script>
+        // Micro-interaction: Animated progress text update
+        const statusText = document.querySelector('h3.font-headline-md.mt-xs');
+        const phrases = [
+            "Chapter 4: The Neural Revolution...",
+            "Synthesizing cognitive frameworks...",
+            "Validating ethical constraints...",
+            "Optimizing narrative flow..."
+        ];
+        let i = 0;
+        setInterval(() => {
+            i = (i + 1) % phrases.length;
+            statusText.style.opacity = 0;
+            setTimeout(() => {
+                statusText.innerText = phrases[i];
+                statusText.style.opacity = 1;
+            }, 500);
+        }, 5000);
+
+        // Connect Form to Backend API
+        document.getElementById('generate-btn').addEventListener('click', async () => {
+            const payload = {
+                topic: document.getElementById('topic-input').value || "The Future of Quantum Computing",
+                genre: document.getElementById('genre-input').value || "Non-fiction",
+                reader_profile: document.getElementById('reader-profile-input').value || "Tech-savvy professionals",
+                tone: document.getElementById('tonality-input').value,
+                target_chapters: parseInt(document.getElementById('chapters-input').value, 10),
+                words_per_chapter: parseInt(document.getElementById('words-input').value, 10)
+            };
+
+            const btn = document.getElementById('generate-btn');
+            btn.innerHTML = '<span class="material-symbols-outlined" data-icon="sync">sync</span> Generating...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/books', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("Book project created successfully! ID: " + data.id);
+                } else {
+                    alert("Error creating book: " + JSON.stringify(data));
+                }
+            } catch (err) {
+                alert("Connection error: " + err);
+            } finally {
+                btn.innerHTML = '<span class="material-symbols-outlined" data-icon="bolt">bolt</span> Generate Book';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body></html>
