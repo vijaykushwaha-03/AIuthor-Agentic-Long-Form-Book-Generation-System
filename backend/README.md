@@ -17,6 +17,16 @@ To check and verify the pgvector vector store readiness:
 
 ## Project Progress Status
 
+### ✅ Module 12.0 Completed: Final Backend QA + Assessment Readiness
+- **Backend Readiness Service** (`backend_readiness_service.py`): Performs comprehensive assessment-readiness evaluations verifying database schema tables, pgvector vector store fallback, agent definitions, prompt registry load configurations, LangGraph node counts, FastAPI routing tables, and default safety gate settings.
+- **End-to-End Dry Run Service** (`e2e_dry_run_service.py`): Orchestrates synchronous, offline-safe sequential validation runs including book creation, chapter Outline planning, mock drafting, memory keeper extraction, DOCX manuscript assembly, and delivery bundle manifest outputs.
+- **Unified QA & Readiness APIs**:
+  - `POST /api/backend/readiness-report` (compiles detailed scorecard validation report and builds markdown summaries)
+  - `POST /api/backend/e2e-dry-run` (synchronously executes and returns metrics for sequential dry runs)
+  - `GET /api/backend/final-checklist` (returns static mapping confirming backend capability completion status)
+- **SAWarning Resolution**: Fixed the SQLAlchemy database connection warning globally across the test suite by checking transaction status flags defensively during conftest session teardowns.
+- **Comprehensive Offline Verification**: Added unit, integration, and API layer tests verifying readiness metrics, E2E dry-runs, and compliance paths, increasing coverage to 1091 tests.
+
 ### ✅ Module 11.0 Completed: Evaluation Report, Prompt Dossier, and Delivery Artifacts
 - **Evaluation Report Service** (`evaluation_report_service.py`): Performs qualitative scorecard validations for chapter sequential numbering, draft/final text presence, repair metadata auditing, export disk integrity, trace coverage, prompt logs, and continuity memory counts.
 - **Prompt Dossier Service** (`prompt_dossier_service.py`): Packages all 8 agent prompt templates, versions, role excerpts, and dummy rendered user examples into a clean, deterministic markdown dossier.
@@ -27,6 +37,13 @@ To check and verify the pgvector vector store readiness:
   - `POST /api/books/{book_id}/delivery-bundle` (synchronously creates documentation files and exports manifest.json)
   - `GET /api/books/{book_id}/delivery-bundle/latest` (retrieves the latest generated manifest dict)
 - **Comprehensive Offline Verification**: Added 36 unit and integration tests verifying checks, dossier formats, disk serialization, API routing, and OpenAPI paths.
+
+### ✅ Module 10.1 Completed: Manuscript Export Cleanup + JSON-Aware Content Extraction
+- **JSON-Aware Content Extraction**: Strips markdown code blocks (` ```json ... ``` `) and parses JSON structures in chapter text fields (e.g. `final_text`), extracting clean manuscript prose by matching keys like `content` or `text` (and matching by chapter number/title if a list is present).
+- **Resilient Text Cleanup**: Normalizes line endings, limits excess blank lines to a maximum of one, and filters out internal workflow/debug prompt markers (e.g. `Mock response for:`, `execution_mode: "mock"`, `run_id`, `book_id`, `payload`, etc.) to produce print-ready manuscripts.
+- **Strict Validation and Safe Fallbacks**: Scans text for forbidden debug text in chapter, front-matter, and back-matter bodies. Rejects dirty text fields, falling back to clean candidates and defaulting to a safe placeholder (`"Content not available for this chapter."`) if all fail.
+- **Persisted Cleaning Metadata**: Compiles cleaning warnings, chapter warnings, and counts of rejected debug dumps. Merges them with request metadata to persist in `ExportFile` database records and returns them in export responses.
+- **Comprehensive Verification**: Added 3 test suites (`test_manuscript_content_utils.py`, `test_book_assembler_clean_content.py`, `test_book_export_clean_docx.py`) validating all utils, integration paths, and DOCX-level text verification offline.
 
 ### ✅ Module 10.0 Completed: Book Assembler and DOCX/PDF Export Generation
 - **Book Assembler Service** (`book_assembler_service.py`): Compiles publication-ready manuscripts from chapters (prefers final_text with fallbacks), outlines, virtual front/back matter (Title Page, Copyright, Table of Contents, Conclusion), memory concepts (glossary), and RAG source documents (bibliography).
@@ -595,6 +612,37 @@ To check and verify the pgvector vector store readiness:
   ```powershell
   pytest
   ```
+
+---
+
+## Real AI Assessment Runs
+
+The AIuthor backend supports fully live, Gemini-powered assessment scenario runs. Note that a React UI/frontend is **not** required to execute or verify these flows; they are fully driven by the backend APIs.
+
+### Setup and Configuration
+To run with live AI logic, configure your local environment or `.env` file:
+```env
+ENABLE_REAL_WORKFLOW_TEST_API=true
+ENABLE_REAL_MEMORY_TEST_API=true
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=<your_real_key>
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+### Manual Runner Script
+For Scenario A ("Modern RAG Systems for AI Engineers"), you can execute the command-line script to run the flow via services directly:
+```bash
+python scripts/run_real_ai_assessment_sample.py --confirm-real-api
+```
+This script is gated and requires the explicit `--confirm-real-api` flag to proceed with costing external API requests.
+
+### Output Files
+All generated files from these runs appear under the `backend/storage/` directory:
+- Manuscript exports (e.g. DOCX/PDF) are written to `backend/storage/exports/`.
+- Delivery bundles (evaluation reports, dossiers, manifests) are written to `backend/storage/delivery/`.
+- Execution logs and traces are tracked in the database and also saved in delivery manifests.
+
+For a full step-by-step API flow (covering Scenarios A-D) through Swagger (`http://localhost:8000/docs`) or curl, refer to the [manual run guide](file:///c:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/docs/real_ai_assessment_runs.md).
 
 ---
 

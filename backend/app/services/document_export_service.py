@@ -125,6 +125,8 @@ class DocumentExportService:
                 doc.add_paragraph(f"Chapter {item.get('chapter_number')}: {item.get('title')}")
             doc.add_page_break()
 
+        from app.utils.manuscript_content import validate_manuscript_export_text
+
         # 3. Front Matter (Excluding title_page and toc as they are custom generated above)
         for section in assembly.front_matter:
             stype = section.get("section_type")
@@ -133,7 +135,13 @@ class DocumentExportService:
             title = section.get("title") or stype.replace("_", " ").title()
             doc.add_heading(title, level=1)
             content = section.get("content") or ""
-            for p_text in content.split("\n"):
+            
+            # Reject and fallback to placeholders if text contains forbidden markers
+            if validate_manuscript_export_text(content):
+                content = "Content not available."
+
+            paragraphs = re.split(r'\n\s*\n', content)
+            for p_text in paragraphs:
                 if p_text.strip():
                     doc.add_paragraph(p_text.strip())
             doc.add_page_break()
@@ -142,7 +150,13 @@ class DocumentExportService:
         for chapter in assembly.chapters:
             doc.add_heading(f"Chapter {chapter.chapter_number}: {chapter.title}", level=1)
             content = chapter.content or ""
-            for p_text in content.split("\n"):
+            
+            # Reject and fallback to placeholders if text contains forbidden markers
+            if validate_manuscript_export_text(content):
+                content = "Content not available for this chapter."
+
+            paragraphs = re.split(r'\n\s*\n', content)
+            for p_text in paragraphs:
                 if p_text.strip():
                     doc.add_paragraph(p_text.strip())
             doc.add_page_break()
@@ -153,7 +167,13 @@ class DocumentExportService:
             title = section.get("title") or stype.replace("_", " ").title()
             doc.add_heading(title, level=1)
             content = section.get("content") or ""
-            for p_text in content.split("\n"):
+            
+            # Reject and fallback to placeholders if text contains forbidden markers
+            if validate_manuscript_export_text(content):
+                content = "Content not available."
+
+            paragraphs = re.split(r'\n\s*\n', content)
+            for p_text in paragraphs:
                 if p_text.strip():
                     doc.add_paragraph(p_text.strip())
             doc.add_page_break()
@@ -283,6 +303,40 @@ class DocumentExportService:
 
         output_dir = self._get_output_dir(request.book_id, request.run_id)
         
+        # Compile cleaning metadata from assembled chapters
+        chapters_with_warnings = []
+        warning_summary = {}
+        source_fields_used = []
+        rejected_debug_dump_count = 0
+        
+        for ch in assembly.chapters:
+            ch_meta = ch.metadata or {}
+            ch_warnings = ch_meta.get("extraction_warnings", [])
+            if ch_warnings:
+                chapters_with_warnings.append(ch.chapter_number)
+                warning_summary[str(ch.chapter_number)] = ch_warnings
+            
+            if ch.source_field:
+                source_fields_used.append(ch.source_field)
+                
+            if ch_meta.get("rejected_debug_dump"):
+                rejected_debug_dump_count += 1
+                
+        source_fields_used = sorted(list(set(source_fields_used)))
+        
+        cleaning_metadata = {
+            "manuscript_cleaning_enabled": True,
+            "chapters_with_warnings": chapters_with_warnings,
+            "warning_summary": warning_summary,
+            "source_fields_used": source_fields_used,
+            "rejected_debug_dump_count": rejected_debug_dump_count
+        }
+        
+        merged_metadata = {
+            **(request.metadata or {}),
+            **cleaning_metadata
+        }
+
         results = []
         docx_generated_path = None
         docx_file_name = None
@@ -309,7 +363,7 @@ class DocumentExportService:
                         status="ready",
                         file_path=docx_generated_path,
                         file_name=docx_file_name,
-                        metadata=request.metadata
+                        metadata=merged_metadata
                     )
                     results.append(BookExportFileItem(
                         export_id=export_id,
@@ -330,7 +384,7 @@ class DocumentExportService:
                         file_path=None,
                         file_name=docx_file_name,
                         error_message=str(e),
-                        metadata=request.metadata
+                        metadata=merged_metadata
                     )
                     results.append(BookExportFileItem(
                         export_id=export_id,
@@ -353,7 +407,7 @@ class DocumentExportService:
                     file_path=None,
                     file_name=pdf_file_name,
                     error_message="PDF export is disabled in configuration.",
-                    metadata=request.metadata
+                    metadata=merged_metadata
                 )
                 results.append(BookExportFileItem(
                     export_id=export_id,
@@ -372,7 +426,7 @@ class DocumentExportService:
                     file_path=None,
                     file_name=pdf_file_name,
                     error_message=err_msg,
-                    metadata=request.metadata
+                    metadata=merged_metadata
                 )
                 results.append(BookExportFileItem(
                     export_id=export_id,
@@ -391,7 +445,7 @@ class DocumentExportService:
                         status="ready",
                         file_path=pdf_generated_path,
                         file_name=pdf_file_name,
-                        metadata=request.metadata
+                        metadata=merged_metadata
                     )
                     results.append(BookExportFileItem(
                         export_id=export_id,
@@ -411,7 +465,7 @@ class DocumentExportService:
                         file_path=None,
                         file_name=pdf_file_name,
                         error_message=str(e),
-                        metadata=request.metadata
+                        metadata=merged_metadata
                     )
                     results.append(BookExportFileItem(
                         export_id=export_id,
@@ -438,5 +492,5 @@ class DocumentExportService:
             status=overall_status,
             assembly=assembly,
             files=results,
-            metadata=request.metadata
+            metadata=merged_metadata
         )

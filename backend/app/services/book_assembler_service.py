@@ -36,35 +36,26 @@ class BookAssemblerService:
         """Fetch BookProject, raising NotFoundError if missing."""
         return self.book_service.get_book_project(book_id)
 
-    def _select_chapter_content(self, chapter: Chapter, prefer_final_text: bool = True) -> tuple[str, str]:
+    def _select_chapter_content(self, chapter: Chapter, prefer_final_text: bool = True) -> tuple[str, str, list[str]]:
         """
-        Selects the best available chapter content according to priority.
+        Selects the best available chapter content according to priority,
+        cleaning the manuscript and parsing JSON if necessary.
         
         Returns:
-            tuple[content, source_field]
+            tuple[content, source_field, warnings]
         """
-        if prefer_final_text:
-            priorities = [
-                ("final_text", chapter.final_text),
-                ("edited_text", chapter.edited_text),
-                ("humanized_text", chapter.humanized_text),
-                ("draft_text", chapter.draft_text),
-                ("summary", chapter.summary),
-            ]
-        else:
-            priorities = [
-                ("draft_text", chapter.draft_text),
-                ("humanized_text", chapter.humanized_text),
-                ("edited_text", chapter.edited_text),
-                ("final_text", chapter.final_text),
-                ("summary", chapter.summary),
-            ]
+        from app.utils.manuscript_content import extract_clean_chapter_manuscript
 
-        for field_name, value in priorities:
-            if value is not None and value.strip():
-                return value, field_name
-
-        return "", "none"
+        return extract_clean_chapter_manuscript(
+            final_text=chapter.final_text,
+            edited_text=chapter.edited_text,
+            humanized_text=chapter.humanized_text,
+            draft_text=chapter.draft_text,
+            summary=chapter.summary,
+            chapter_number=chapter.chapter_number,
+            chapter_title=chapter.title,
+            prefer_final_text=prefer_final_text
+        )
 
     def _load_front_matter(self, book: BookProject, include_toc: bool = True) -> list[dict]:
         """
@@ -231,9 +222,25 @@ class BookAssemblerService:
 
         assembled_chapters = []
         for ch in chapters:
-            content, source_field = self._select_chapter_content(ch, prefer_final_text=request.prefer_final_text)
+            content, source_field, warnings = self._select_chapter_content(ch, prefer_final_text=request.prefer_final_text)
             if not content or not content.strip():
                 continue
+            
+            from app.utils.manuscript_content import try_parse_json_text
+            source_val = getattr(ch, source_field, None) if source_field != "placeholder" else None
+            is_json_extracted = False
+            if source_val:
+                is_json_extracted = try_parse_json_text(source_val) is not None
+
+            ch_metadata = dict(ch.chapter_contract) if ch.chapter_contract else {}
+            ch_metadata.update({
+                "content_source_field": source_field,
+                "manuscript_cleaning_enabled": True,
+                "extraction_warnings": warnings,
+                "rejected_debug_dump": any("rejected: looks like a debug or prompt dump" in w for w in warnings),
+                "json_content_extracted": is_json_extracted
+            })
+
             assembled_chapters.append(AssembledChapter(
                 chapter_id=ch.id,
                 chapter_number=ch.chapter_number,
@@ -241,7 +248,7 @@ class BookAssemblerService:
                 content=content,
                 source_field=source_field,
                 word_count=len(content.split()),
-                metadata=ch.chapter_contract
+                metadata=ch_metadata
             ))
 
         # Extract title details from project metadata

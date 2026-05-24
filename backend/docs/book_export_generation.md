@@ -88,3 +88,20 @@ Body:
 - **LibreOffice Mocking**: The PDF conversion method (`convert_docx_to_pdf`) is monkeypatched in the test suite to bypass actual LibreOffice execution. Pytest does not require LibreOffice to be installed.
 - **No LLM calls**: Assembly and exports do not invoke any LLM or require Gemini/OpenAI API keys in tests.
 - **Safety**: No background workers or Celery task queues are utilized. Everything is executed synchronously at the endpoint controller layer.
+
+---
+
+## 8. Manuscript Content Cleaning & JSON-Aware Extraction (Module 10.1)
+
+To ensure the exported DOCX/PDF manuscripts contain only clean, print-ready prose, the pipeline includes a strict text cleaning and extraction layer:
+- **Markdown Fences Stripping**: Automatically removes markdown code blocks (e.g. ` ```json ` ... ` ``` `) from the chapter content before evaluating the text.
+- **JSON Parsing & Content Extraction**: If a text field contains a JSON payload (either raw or fenced), the parser attempts to extract the actual manuscript prose (using priority keys like `content` or `text`, and matching by chapter number/title if a list is present).
+- **Debug & Prompt Dump Rejection**: Scans content for forbidden development/mock debug markers (e.g. `"Mock response for:"`, `"execution_mode: \"mock\""`, `"run_id"`, `"book_id"`, etc.). If a field is classified as a debug dump, it is skipped in favor of the next best candidate.
+- **Safe Fallback Placeholders**: If all candidate text fields for a chapter are empty, invalid JSON, or debug dumps, the system falls back to a safe placeholder: `"Content not available for this chapter."`
+- **Cleaning Metadata Logging**: Details about the cleaning process are compiled and logged in the database (`ExportFile` record `export_metadata`) and included in the export response:
+  - `manuscript_cleaning_enabled` (boolean)
+  - `chapters_with_warnings` (list of chapter numbers that encountered warnings/rejections)
+  - `warning_summary` (mapping chapter numbers to specific warnings)
+  - `source_fields_used` (unique list of fields resolved across all chapters)
+  - `rejected_debug_dump_count` (total count of rejected chapters with debug text)
+

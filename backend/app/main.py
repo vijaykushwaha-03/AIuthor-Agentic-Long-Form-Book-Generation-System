@@ -35,6 +35,7 @@ from app.api.routes_bookrun_workflows import router as bookrun_workflows_router
 from app.api.routes_chapter_generation import router as chapter_generation_router
 from app.api.routes_chapter_self_healing import router as chapter_self_healing_router
 from app.api.routes_memory_extraction import router as memory_extraction_router
+from app.api.routes_backend_qa import router as backend_qa_router
 from app.api.routes_book_exports import router as book_exports_router
 from app.api.routes_delivery_reports import router as delivery_reports_router
 from app.config import get_settings
@@ -140,6 +141,9 @@ def create_app() -> FastAPI:
     app.include_router(chapter_generation_router)
     app.include_router(chapter_self_healing_router)
     app.include_router(memory_extraction_router)
+    app.include_router(backend_qa_router)
+
+
 
 
     # ── Admin Dashboard ──────────────────────────────────────────────────────

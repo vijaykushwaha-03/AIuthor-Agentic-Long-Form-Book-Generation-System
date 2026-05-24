@@ -190,6 +190,14 @@ Reviews qualitative validation scores, compiles prompt template dossiers, and pa
 
 ---
 
+## 17. Backend QA & Assessment Readiness Endpoints (Module 12.0)
+Validates database schema state, LangGraph workflows registry node counts, API route inventory, and safety gate defaults; executes offline E2E dry runs.
+* **POST** `/api/backend/readiness-report` — Generate a database-backed or clean-state readiness assessment report.
+* **POST** `/api/backend/e2e-dry-run` — Synchronously execute an offline-safe sequential validation run of the entire pipeline.
+* **GET** `/api/backend/final-checklist` — Retrieve a static checklist mapping for backend integration compliance.
+
+---
+
 ## Not Implemented Yet (Postponed to Workflow Modules)
 The API layer operates purely as a database-driven CRUD and metadata management backend. The following runtime orchestrations and features will be implemented in subsequent agent/workflow phases:
 1. **Full Book Generation**: Background worker pipelines to generate complete books are not built yet.

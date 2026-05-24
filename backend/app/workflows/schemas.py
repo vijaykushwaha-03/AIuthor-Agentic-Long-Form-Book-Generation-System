@@ -733,5 +733,91 @@ class DeliveryBundleResponse(BaseSchema):
     metadata: dict | None = None
 
 
+# ── Final QA & Assessment Readiness Schemas ───────────────────────────────────
+
+class BackendReadinessCheckItem(BaseSchema):
+    """
+    Represent a single readiness check result.
+    """
+    check_name: str
+    category: str
+    status: str
+    message: str
+    details: dict | None = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        valid = ["pass", "warning", "fail", "skipped"]
+        if v not in valid:
+            raise ValueError(f"status must be one of {valid}, got '{v}'")
+        return v
+
+
+class BackendReadinessReportRequest(BaseSchema):
+    """
+    Request payload to configure readiness checks.
+    """
+    book_id: UUID | None = None
+    run_id: UUID | None = None
+    include_database_checks: bool = True
+    include_api_checks: bool = True
+    include_agent_checks: bool = True
+    include_workflow_checks: bool = True
+    include_export_checks: bool = True
+    include_delivery_checks: bool = True
+    include_safety_checks: bool = True
+    metadata: dict | None = None
+
+
+class BackendReadinessReportResponse(BaseSchema):
+    """
+    FastAPI envelope returning readiness report summaries and scorecard.
+    """
+    status: str
+    total_checks: int
+    pass_count: int
+    warning_count: int
+    fail_count: int
+    skipped_count: int
+    checks: list[BackendReadinessCheckItem]
+    markdown_report: str
+    metadata: dict | None = None
+
+
+class EndToEndDryRunRequest(BaseSchema):
+    """
+    Request model for triggering synchronous, offline-safe sequential dry runs.
+    """
+    topic: str = Field(default="Modern RAG Systems for AI Engineers", min_length=1)
+    genre: str = "technical guide"
+    tone: str = "clear, practical, and mentor-like"
+    create_sample_book: bool = True
+    create_sample_chapters: bool = True
+    run_mock_chapter_generation: bool = True
+    run_memory_extraction: bool = True
+    run_export_generation: bool = True
+    run_delivery_bundle: bool = True
+    max_chapters: int = Field(default=1, ge=1, le=3)
+    metadata: dict | None = None
+
+
+class EndToEndDryRunResponse(BaseSchema):
+    """
+    Response model detailing metrics for the dry run.
+    """
+    status: str
+    book_id: UUID | None = None
+    run_id: UUID | None = None
+    chapter_ids: list[UUID] = Field(default_factory=list)
+    generated_chapter_count: int = 0
+    memory_written_count: int = 0
+    export_file_count: int = 0
+    delivery_artifact_count: int = 0
+    checks: list[BackendReadinessCheckItem] = Field(default_factory=list)
+    metadata: dict | None = None
+
+
+
 
 
