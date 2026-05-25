@@ -1,214 +1,147 @@
-# AIuthor — Agentic Long-Form Book Generation System
+# ✍️ AIuthor — Agentic Long-Form Book Generation System
 
-AIuthor is a production-style agentic system that generates publication-ready books from a user brief. It uses separate agents (Planner, Researcher, Writer, Humanizer, Editor, Fact Checker, Memory Keeper, Assembler) orchestrated via LangGraph, with PostgreSQL + pgvector for persistent memory and RAG, and DOCX/PDF export.
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Backend | FastAPI + Pydantic v2 |
-| Database | PostgreSQL 18 (local) + pgvector |
-| Orchestration | LangGraph |
-| Exports | python-docx + LibreOffice |
-| Frontend | React + Vite + Tailwind (later) |
-| Testing | Pytest + Playwright |
+AIuthor is a production-grade, state-of-the-art agentic system designed to generate publication-ready books from a structured user brief. Orchestrated via **LangGraph**, it runs a sequential multi-agent loop backed by a **PostgreSQL + pgvector** memory layer for factual continuity, RAG, and document assembly, exporting fully polished manuscripts to **DOCX/PDF**.
 
 ---
 
-## Prerequisites
+## 🚀 Key Features
 
-- Python 3.11+
-- PostgreSQL 18 installed and running locally
-- Git
+* **Multi-Agent Orchestration**: Eight cooperative agents (Planner, Researcher, Writer, Humanizer, Editor, Fact Checker, Memory Keeper, and Assembler) working in tandem via LangGraph.
+* **Continuity & Memory System**: Relational PostgreSQL database storing lore bibles (Characters, Concepts, Facts, Callbacks, and Tone Fingerprints) to guarantee consistency across chapters.
+* **Hybrid RAG Layer**: Combined lexical (BM25 keyword) and semantic (Gemini vector embeddings via pgvector) retrieval for fact-grounding.
+* **JSON Leak & Injection Shield**: Advanced manuscript cleaners to prevent prompt instructions, raw JSON envelopes, formatting blocks, or code fences from leaking into the final prose.
+* **Professional Document Export**: Compiles completed chapters into a publication-ready DOCX with front matter, copyright information, Table of Contents, glossary, and bibliography.
 
 ---
 
-## Local Setup (No Docker)
+## 🛠️ Tech Stack
 
-### 1. Clone the repository
-```bash
-git clone <repo-url>
-cd AIuthor-Agentic-Long-Form-Book-Generation-System
+| Component | Technology |
+| :--- | :--- |
+| **Backend Framework** | FastAPI + Pydantic v2 |
+| **Database & Memory** | PostgreSQL 16/18 + `pgvector` |
+| **Workflow Graph** | LangGraph |
+| **LLM Providers** | NVIDIA NIM AI Endpoints (`meta/llama-3.3-70b-instruct` / Gemini-2.5) |
+| **Doc Exporting** | `python-docx` + LibreOffice PDF converter |
+| **Testing** | Pytest |
+
+---
+
+## 📂 Project Directory Structure
+
+```text
+AIuthor-Agentic-Long-Form-Book-Generation-System/
+├── backend/
+│   ├── app/
+│   │   ├── api/                 # Endpoint routers (health, books, runs, exports, etc.)
+│   │   ├── models/              # SQLAlchemy database ORM models (observability & lore bibles)
+│   │   ├── schemas/             # Pydantic data schemas for API requests/responses
+│   │   ├── services/            # Core business logic layer (generation loops, exports, evals)
+│   │   ├── utils/               # Sanitizers, parsers, and text cleaning utilities
+│   │   ├── workflows/           # LangGraph pipeline definition, agent nodes, and graph states
+│   │   └── database.py          # SQLAlchemy engine and session dependency
+│   ├── docs/                    # Detailed engineering architecture and module docs
+│   ├── prompts/                 # Standardized prompt dossiers for all agents
+│   ├── storage/                 # Local directory for exported books and programmatic reports
+│   ├── generate_new_book.py     # End-to-end book generation automation script
+│   ├── requirements.txt         # Pinned Python dependencies
+│   └── pyproject.toml           # Pytest settings
+├── DELIVERABLES/                # Compiled HR submission folder containing checklist items
+│   ├── sample_books/            # Generated sample manuscripts in DOCX format
+│   ├── README.md                # Delivery mapping checklist
+│   ├── ARCHITECTURE.md          # Multi-agent topology and RAG flow
+│   ├── MEMORY_SCHEMA.md         # Database tables and sample JSON records
+│   ├── EVALS_REPORT.md          # Scorecard with LLM-as-judge evaluations
+│   └── PROMPTS_DOSSIER.md       # Full prompt collection for all agents
+└── README.md                    # Root project documentation (this file)
 ```
 
-### 2. PostgreSQL Setup
+---
 
-#### 2a. Make sure PostgreSQL is running
-```powershell
-Get-Service postgresql-x64-18
-# Should show: Running
-```
+## ⚙️ Local Setup Guide
 
-#### 2b. Create the database user and database
-Open a terminal as Administrator (or use pgAdmin), then run:
+Follow these steps to run the backend and execute the book generator locally.
+
+### 1. Database Configuration (PostgreSQL 16/18)
+Ensure PostgreSQL (with the `pgvector` extension) is installed and running on port `5433` (or update `.env`).
+
+Connect to your database instance and run:
 ```sql
--- Connect as postgres superuser
--- In psql: psql -U postgres -h 127.0.0.1
-
 CREATE USER aiuthor WITH PASSWORD 'aiuthor_secret' CREATEDB;
 CREATE DATABASE aiuthor_db OWNER aiuthor;
 ```
 
-#### 2c. Add PostgreSQL to PATH (PowerShell — current session)
-```powershell
-$env:PATH += ";C:\Program Files\PostgreSQL\18\bin"
-```
-
-To make this permanent, add `C:\Program Files\PostgreSQL\18\bin` to your System Environment Variables.
-
-#### 2d. Verify connection
-```bash
-psql -U aiuthor -h 127.0.0.1 -d aiuthor_db -c "SELECT version();"
-# Should print: PostgreSQL 18.3 on x86_64-windows ...
-```
-
-### 3. Python Virtual Environment
+### 2. Python Environment Setup
+Navigate to the backend directory, initialize a virtual environment, and install all dependencies:
 ```powershell
 cd backend
 python -m venv .venv
 
-# Activate (PowerShell)
+# On Windows (PowerShell)
 .\.venv\Scripts\Activate.ps1
 
-# Activate (Command Prompt)
+# On Windows (CMD)
 .\.venv\Scripts\activate.bat
-```
 
-### 4. Install Dependencies
-```powershell
+# On Linux/macOS
+source .venv/bin/activate
+
 pip install -r requirements.txt
 ```
 
-### 5. Configure Environment
+### 3. Environment File Configuration
+Copy the template `.env` and enter your API keys:
 ```powershell
 copy .env.example .env
-# .env is already pre-filled for local Postgres
-# Edit if your credentials differ
 ```
+Key configuration settings in `.env`:
+* `LLM_PROVIDER=nvidia`
+* `NVIDIA_API_KEY=your-nvidia-nim-key`
+* `GEMINI_API_KEY=your-gemini-key`
+* `DATABASE_URL=postgresql+psycopg2://aiuthor:aiuthor_secret@127.0.0.1:5433/aiuthor_db`
 
-The default `.env` settings:
-```
-DATABASE_URL=postgresql+psycopg2://aiuthor:aiuthor_secret@127.0.0.1:5432/aiuthor_db
-APP_ENV=development
-APP_VERSION=0.1.0
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
-```
+---
 
-### 6. Run the Backend Server
+## 🏃 Running the Book Generation Script
+
+To run a full end-to-end book generation, export, evaluation, and packaging loop, run the automation script:
+
 ```powershell
-# From backend/ directory with venv activated
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+$env:PYTHONPATH="."
+python generate_new_book.py
 ```
 
-Server starts at: **http://127.0.0.1:8000**
+This script will automate the following operations:
+1. **Initialize** the database schema.
+2. **Create** the book project: *"Architecting Modern Retrieval-Augmented Generation Systems"*.
+3. **Plan and create** 3 target chapters in the PostgreSQL database.
+4. **Trigger the sequential LangGraph pipeline** in `real_dev` execution mode.
+5. **Export** the final clean book manuscript into DOCX.
+6. **Compile** trace summaries, memory reports, and token/cost ledgers.
 
-You should see:
-```
-INFO: Database ping successful.
-INFO: Application startup complete.
-INFO: Uvicorn running on http://127.0.0.1:8000
+To copy the fresh results into the HR delivery folder:
+```powershell
+python C:\Users\Vijay\.gemini\antigravity-ide\brain\b578ce44-60e6-4450-8e87-ab7db2ddaa2f\scratch\compile_submission.py
 ```
 
 ---
 
-## API Endpoints (Module 1)
+## 🧪 Running Unit & Integration Tests
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Service health check (load-balancer probe) |
-| GET | `/api/version` | API version and service name |
-| GET | `/docs` | Interactive Swagger UI |
-| GET | `/redoc` | ReDoc documentation |
-
-### Example responses
-```bash
-# Health check
-curl http://127.0.0.1:8000/health
-# {"status":"ok","env":"development","version":"0.1.0"}
-
-# Version
-curl http://127.0.0.1:8000/api/version
-# {"version":"0.1.0","service":"aiuthor-backend"}
-```
-
----
-
-## Running Tests
-
-Tests use in-memory SQLite — **no Postgres needed** to run the test suite.
+The test suite runs on an in-memory SQLite database configuration—**no local Postgres instance is required** for testing.
 
 ```powershell
-# From backend/ directory with venv activated
+# From the backend/ directory with .venv active
 python -m pytest tests/ -v
-
-# With coverage
-python -m pytest tests/ -v --cov=app --cov-report=term-missing
-```
-
-Expected output:
-```
-15 passed in 0.21s
 ```
 
 ---
 
-## Project Structure
+## 🔍 Connection & API Overview
 
-```
-AIuthor-Agentic-Long-Form-Book-Generation-System/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI app factory (create_app)
-│   │   ├── config.py            # Pydantic Settings — reads from .env
-│   │   ├── database.py          # Lazy SQLAlchemy engine + get_db() dep
-│   │   └── api/
-│   │       └── routes_health.py # GET /health  GET /api/version
-│   ├── prompts/                 # Agent prompt markdown files (Module 4)
-│   ├── tests/
-│   │   ├── conftest.py          # Fixtures (SQLite override for tests)
-│   │   └── test_health.py       # 15 tests
-│   ├── .env                     # Your local config (git-ignored)
-│   ├── .env.example             # Template with all variables
-│   ├── requirements.txt
-│   └── pyproject.toml           # Pytest config
-├── docs/
-│   └── decisions.md             # 10 engineering decisions
-├── docker-compose.yml           # Optional: Docker setup (not required)
-└── README.md
-```
-
----
-
-## Credentials Summary
-
-| What | Value |
-|------|-------|
-| Postgres host | 127.0.0.1:5432 |
-| DB name | aiuthor_db |
-| DB user | aiuthor |
-| DB password | aiuthor_secret |
-| Postgres superuser | postgres / aiuthor_pg_2026 |
-| API base URL | http://127.0.0.1:8000 |
-| Swagger UI | http://127.0.0.1:8000/docs |
-
----
-
-## Implementation Modules
-
-| Module | Status | Description |
-|--------|--------|-------------|
-| 0 | ✅ Done | Repository foundation, structure, config |
-| 1 | ✅ Done | FastAPI core, health endpoints, DB session |
-| 2 | ⏳ Next | SQLAlchemy models + Alembic migrations |
-| 3 | ⏳ | Pydantic schemas for agent I/O |
-| 4 | ⏳ | Prompt registry |
-| 5 | ⏳ | Observability (traces, prompt logs, token ledger) |
-| 6 | ⏳ | RAG pipeline + pgvector |
-| 7 | ⏳ | Memory system |
-| 8 | ⏳ | LangGraph orchestration |
-| 9 | ⏳ | Agent implementations |
-| 10 | ⏳ | Chapter insertion repair |
-| 11 | ⏳ | DOCX/PDF export |
-| 12 | ⏳ | Evals |
+| Service | Address |
+| :--- | :--- |
+| **FastAPI Backend Base** | `http://127.0.0.1:8000` |
+| **Interactive Swagger API Docs** | `http://127.0.0.1:8000/docs` |
+| **PostgreSQL Database Host** | `127.0.0.1:5433` (DB: `aiuthor_db`) |
+| **Vite Frontend Dashboard** | Served statically at `/static/index.html` |
