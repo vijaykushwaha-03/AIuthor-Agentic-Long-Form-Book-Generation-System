@@ -178,9 +178,18 @@ class ChapterGenerationService:
             elif agent == "editor":
                 chapter.edited_text = step_content
             elif agent == "assembler":
-                chapter.final_text = step_content
+                # The assembler node outputs a book-level outline summary package, not chapter-level prose.
+                # We skip storing it in chapter.final_text to preserve the actual chapter prose.
+                pass
 
-        # Fallbacks for quality tiers
+        # Fallbacks for quality tiers: prefer editor > humanizer > writer > content
+        if chapter.edited_text:
+            chapter.final_text = chapter.edited_text
+        elif chapter.humanized_text:
+            chapter.final_text = chapter.humanized_text
+        elif chapter.draft_text:
+            chapter.final_text = chapter.draft_text
+
         if not chapter.final_text:
             chapter.final_text = content
         if not chapter.draft_text:
@@ -333,15 +342,16 @@ class ChapterGenerationService:
             )
 
     def _extract_chapter_content(self, workflow_output: dict) -> str:
-        content = workflow_output.get("final_content")
-        if content:
-            return content
-
         steps = workflow_output.get("steps", [])
-        for agent in ["assembler", "editor", "writer"]:
+        for agent in ["editor", "humanizer", "writer"]:
             for step in steps:
                 if step.get("agent_name") == agent and step.get("content"):
                     return step["content"]
+
+        content = workflow_output.get("final_content")
+        if content:
+            if not (content.strip().startswith("{") or "outline" in content.lower()):
+                return content
 
         raise ValidationServiceError(
             message="No text content generated in workflow output steps.",

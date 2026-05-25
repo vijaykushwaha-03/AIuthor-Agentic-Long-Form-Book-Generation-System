@@ -446,25 +446,25 @@ class OpenAILLMProvider(BaseLLMProvider):
         )
 
 
-# ── OpenRouterLLMProvider ─────────────────────────────────────────────────────
+# ── NvidiaLLMProvider ─────────────────────────────────────────────────────────
 
-class OpenRouterLLMProvider(BaseLLMProvider):
+class NvidiaLLMProvider(BaseLLMProvider):
     """
-    OpenRouter provider using the official openai SDK with a custom base URL.
+    NVIDIA provider using langchain_nvidia_ai_endpoints.ChatNVIDIA.
     """
 
     def __init__(
         self,
         api_key: str,
-        model: str = "google/gemini-2.5-flash:free",
+        model: str = "moonshotai/kimi-k2.6",
         temperature: float = 0.7,
         max_output_tokens: int = 4000,
         timeout_seconds: int = 60,
     ) -> None:
         if not api_key or not api_key.strip():
             raise LLMConfigurationError(
-                message="OpenRouter API key is required but was not provided.",
-                provider="openrouter",
+                message="NVIDIA API key is required but was not provided.",
+                provider="nvidia",
             )
         self._api_key = api_key
         self._model = model
@@ -474,85 +474,83 @@ class OpenRouterLLMProvider(BaseLLMProvider):
 
     @property
     def provider_name(self) -> str:
-        return "openrouter"
+        return "nvidia"
 
     @property
     def model_name(self) -> str:
         return self._model
 
     def generate(self, request: LLMRequest) -> LLMResponse:
-        """Call the OpenRouter API via OpenAI client and return a normalised LLMResponse."""
+        """Call the ChatNVIDIA API and return a normalised LLMResponse."""
         try:
-            import openai  # type: ignore[import]
+            from langchain_nvidia_ai_endpoints import ChatNVIDIA
         except ImportError as exc:
             raise LLMProviderError(
-                message="openai package is not installed. Run: pip install openai",
-                provider="openrouter",
+                message="langchain-nvidia-ai-endpoints package is not installed. Run: pip install langchain-nvidia-ai-endpoints",
+                provider="nvidia",
             ) from exc
 
         model_to_use = request.model or self._model
         temperature = request.temperature if request.temperature is not None else self._temperature
         max_tokens = request.max_output_tokens or self._max_output_tokens
 
-        messages: list[dict[str, Any]] = [
-            {"role": msg.role, "content": msg.content}
-            for msg in request.messages
-        ]
+        # Convert LLMMessages to ChatNVIDIA role/content format
+        messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
 
         logger.debug(
-            "OpenRouterLLMProvider.generate: model=%s temperature=%.2f max_tokens=%d",
+            "NvidiaLLMProvider.generate: model=%s temperature=%.2f max_tokens=%d",
             model_to_use, temperature, max_tokens,
         )
 
         try:
-            client = openai.OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=self._api_key, 
-                timeout=self._timeout_seconds
+            # Create client
+            client = ChatNVIDIA(
+                model=model_to_use,
+                api_key=self._api_key,
+                temperature=temperature,
+                max_completion_tokens=max_tokens,
             )
-            # Use retry loop to handle 429
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    completion = client.chat.completions.create(
-                        model=model_to_use,
-                        messages=messages,  # type: ignore[arg-type]
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                        extra_headers={
-                            "HTTP-Referer": "http://localhost:8000", # Optional
-                            "X-Title": "AIuthor", # Optional
-                        }
-                    )
-                    break
-                except Exception as e:
-                    import time
-                    if "429" in str(e) and attempt < max_retries - 1:
-                        logger.warning(f"OpenRouter 429 Rate Limit. Retrying in 15s... (Attempt {attempt+1}/{max_retries})")
-                        time.sleep(15)
-                    else:
-                        raise e
+
+            # Check if this is a thinking model (like moonshotai/kimi-k2.6) and enable thinking
+            is_thinking_model = "kimi" in model_to_use.lower() or "thinking" in model_to_use.lower() or "k2" in model_to_use.lower()
+            
+            kwargs = {}
+            if is_thinking_model:
+                kwargs["chat_template_kwargs"] = {"thinking": True}
+
+            completion = client.invoke(messages, **kwargs)
         except Exception as exc:
             raise LLMProviderError(
-                message=f"OpenRouter API call failed: {exc}",
-                provider="openrouter",
+                message=f"NVIDIA API call failed: {exc}",
+                provider="nvidia",
                 details={"error": str(exc)},
             ) from exc
 
-        try:
-            content = completion.choices[0].message.content or ""
-        except (IndexError, AttributeError):
-            content = ""
+        # Extract content
+        content = completion.content or ""
 
-        input_tokens, output_tokens, total_tokens = None, None, None
+        # Extract reasoning content if present in additional_kwargs
+        reasoning_content = None
+        if hasattr(completion, "additional_kwargs") and completion.additional_kwargs:
+            reasoning_content = completion.additional_kwargs.get("reasoning_content")
+
+        # Extract token usage safely
+        input_tokens = None
+        output_tokens = None
+        total_tokens = None
         try:
-            usage = completion.usage
-            if usage:
-                input_tokens = getattr(usage, "prompt_tokens", None)
-                output_tokens = getattr(usage, "completion_tokens", None)
-                total_tokens = getattr(usage, "total_tokens", None)
+            token_usage = completion.response_metadata.get("token_usage")
+            if token_usage:
+                input_tokens = token_usage.get("prompt_tokens")
+                output_tokens = token_usage.get("completion_tokens")
+                total_tokens = token_usage.get("total_tokens")
         except Exception:
             pass
+
+        raw_response = {}
+        if reasoning_content:
+            raw_response["reasoning_content"] = reasoning_content
+            logger.info("NVIDIA Reasoning/Thinking process:\n%s", reasoning_content)
 
         return LLMResponse(
             provider=self.provider_name,
@@ -561,6 +559,7 @@ class OpenRouterLLMProvider(BaseLLMProvider):
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             total_tokens=total_tokens,
+            raw_response=raw_response if raw_response else None,
             metadata=request.metadata,
         )
 

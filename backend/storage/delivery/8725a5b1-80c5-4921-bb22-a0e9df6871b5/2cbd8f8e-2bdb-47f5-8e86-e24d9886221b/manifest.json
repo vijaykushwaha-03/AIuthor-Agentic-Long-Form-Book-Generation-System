@@ -1,0 +1,56 @@
+{
+  "artifacts": [
+    {
+      "artifact_type": "evaluation_report",
+      "error_message": null,
+      "file_name": "evaluation_report.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/8725a5b1-80c5-4921-bb22-a0e9df6871b5/2cbd8f8e-2bdb-47f5-8e86-e24d9886221b/evaluation_report.md",
+      "file_size_bytes": 3517,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "prompt_dossier",
+      "error_message": null,
+      "file_name": "prompt_dossier.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/8725a5b1-80c5-4921-bb22-a0e9df6871b5/2cbd8f8e-2bdb-47f5-8e86-e24d9886221b/prompt_dossier.md",
+      "file_size_bytes": 20992,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "architecture_summary",
+      "error_message": null,
+      "file_name": "architecture_summary.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/8725a5b1-80c5-4921-bb22-a0e9df6871b5/2cbd8f8e-2bdb-47f5-8e86-e24d9886221b/architecture_summary.md",
+      "file_size_bytes": 1434,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "memory_report",
+      "error_message": null,
+      "file_name": "memory_report.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/8725a5b1-80c5-4921-bb22-a0e9df6871b5/2cbd8f8e-2bdb-47f5-8e86-e24d9886221b/memory_report.md",
+      "file_size_bytes": 366,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "trace_summary",
+      "error_message": null,
+      "file_name": "trace_summary.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/8725a5b1-80c5-4921-bb22-a0e9df6871b5/2cbd8f8e-2bdb-47f5-8e86-e24d9886221b/trace_summary.md",
+      "file_size_bytes": 2060,
+      "status": "ready"
+    },
+    {
+      "artifact_type": "export_summary",
+      "error_message": null,
+      "file_name": "export_summary.md",
+      "file_path": "C:/Users/Vijay/Desktop/AIuthor/AIuthor-Agentic-Long-Form-Book-Generation-System/backend/storage/delivery/8725a5b1-80c5-4921-bb22-a0e9df6871b5/2cbd8f8e-2bdb-47f5-8e86-e24d9886221b/export_summary.md",
+      "file_size_bytes": 500,
+      "status": "ready"
+    }
+  ],
+  "book_id": "8725a5b1-80c5-4921-bb22-a0e9df6871b5",
+  "generated_at": "2026-05-25T02:53:23.026619",
+  "run_id": "2cbd8f8e-2bdb-47f5-8e86-e24d9886221b",
+  "status": "success"
+}

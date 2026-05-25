@@ -11,11 +11,11 @@ import logging
 
 from app.llm.base import BaseLLMProvider
 from app.llm.exceptions import LLMConfigurationError
-from app.llm.providers import GeminiLLMProvider, OpenAILLMProvider, OpenRouterLLMProvider
+from app.llm.providers import GeminiLLMProvider, OpenAILLMProvider, NvidiaLLMProvider
 
 logger = logging.getLogger(__name__)
 
-_SUPPORTED_PROVIDERS = {"gemini", "openai", "openrouter"}
+_SUPPORTED_PROVIDERS = {"gemini", "openai", "nvidia"}
 
 
 def get_llm_provider(provider: str | None = None) -> BaseLLMProvider:
@@ -93,19 +93,19 @@ def get_llm_provider(provider: str | None = None) -> BaseLLMProvider:
             timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
         )
 
-    if resolved == "openrouter":
-        api_key = settings.OPENROUTER_API_KEY
+    if resolved == "nvidia":
+        api_key = settings.NVIDIA_API_KEY
         if not api_key:
             raise LLMConfigurationError(
                 message=(
-                    "OPENROUTER_API_KEY is not set. "
-                    "Add OPENROUTER_API_KEY to your .env file."
+                    "NVIDIA_API_KEY is not set. "
+                    "Add NVIDIA_API_KEY to your .env file."
                 ),
-                provider="openrouter",
+                provider="nvidia",
             )
-        return OpenRouterLLMProvider(
+        return NvidiaLLMProvider(
             api_key=api_key,
-            model=settings.OPENROUTER_MODEL,
+            model=settings.NVIDIA_MODEL,
             temperature=settings.LLM_TEMPERATURE,
             max_output_tokens=settings.LLM_MAX_OUTPUT_TOKENS,
             timeout_seconds=settings.LLM_TIMEOUT_SECONDS,

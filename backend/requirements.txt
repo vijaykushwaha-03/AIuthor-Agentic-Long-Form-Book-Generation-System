@@ -23,6 +23,7 @@ python-dotenv==1.0.1
 # LLM providers (Module 5.0)
 google-genai==0.8.0
 openai==1.30.3
+langchain-nvidia-ai-endpoints==1.4.0
 
 # Vector storage (Module 6.0A)
 pgvector==0.3.2

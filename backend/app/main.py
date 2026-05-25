@@ -1,15 +1,54 @@
-# """
-# AIuthor Backend — FastAPI Application Factory.
 
-# Decision DEC-003: create_app() factory pattern for testability.
 
-# Usage:
-#   # Development server (from backend/ directory)
-#   uvicorn app.main:app --reload
 
-#   # Tests use create_app() directly via conftest.py
-# """
 from __future__ import annotations
+
+import platform
+import httpx
+
+platform.system = lambda: "Windows"
+platform.release = lambda: "10"
+platform.version = lambda: "10.0.19045"
+platform.win32_ver = lambda: ("10", "10.0.19045", "", "Multiprocessor Free")
+platform.uname = lambda: platform.uname_result("Windows", "localhost", "10", "10.0.19045", "AMD64")
+
+_orig_client_init = httpx.Client.__init__
+def _patched_client_init(self, *args, **kwargs):
+    if "proxies" in kwargs:
+        proxies = kwargs.pop("proxies")
+        if proxies:
+            if isinstance(proxies, dict):
+                if "https://" in proxies:
+                    kwargs["proxy"] = proxies["https://"]
+                elif "http://" in proxies:
+                    kwargs["proxy"] = proxies["http://"]
+                elif "all" in proxies:
+                    kwargs["proxy"] = proxies["all"]
+                elif len(proxies) > 0:
+                    kwargs["proxy"] = list(proxies.values())[0]
+            else:
+                kwargs["proxy"] = proxies
+    _orig_client_init(self, *args, **kwargs)
+httpx.Client.__init__ = _patched_client_init
+
+_orig_async_client_init = httpx.AsyncClient.__init__
+def _patched_async_client_init(self, *args, **kwargs):
+    if "proxies" in kwargs:
+        proxies = kwargs.pop("proxies")
+        if proxies:
+            if isinstance(proxies, dict):
+                if "https://" in proxies:
+                    kwargs["proxy"] = proxies["https://"]
+                elif "http://" in proxies:
+                    kwargs["proxy"] = proxies["http://"]
+                elif "all" in proxies:
+                    kwargs["proxy"] = proxies["all"]
+                elif len(proxies) > 0:
+                    kwargs["proxy"] = list(proxies.values())[0]
+            else:
+                kwargs["proxy"] = proxies
+    _orig_async_client_init(self, *args, **kwargs)
+httpx.AsyncClient.__init__ = _patched_async_client_init
 
 import logging
 from contextlib import asynccontextmanager
@@ -37,7 +76,6 @@ from app.api.routes_bookrun_workflows import router as bookrun_workflows_router
 from app.api.routes_chapter_generation import router as chapter_generation_router
 from app.api.routes_chapter_self_healing import router as chapter_self_healing_router
 from app.api.routes_memory_extraction import router as memory_extraction_router
-from app.api.routes_backend_qa import router as backend_qa_router
 from app.api.routes_book_exports import router as book_exports_router
 from app.api.routes_delivery_reports import router as delivery_reports_router
 from app.config import get_settings
@@ -47,7 +85,6 @@ logger = logging.getLogger(__name__)
 
 
 
-# ── Lifespan (startup / shutdown) ─────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -63,19 +100,17 @@ async def lifespan(app: FastAPI):
         settings.APP_VERSION,
     )
 
-    # Attempt DB ping — warn but do not fail if unreachable (e.g., in tests)
     try:
         from app.database import ping_db
         ping_db()
     except Exception as exc:
         logger.warning("DB ping failed on startup (non-fatal in test env): %s", exc)
 
-    yield  # Server is now live and handling requests
+    yield
 
     logger.info("AIuthor backend shutting down.")
 
 
-# ── Application factory ───────────────────────────────────────────────────────
 def create_app() -> FastAPI:
     """
     Build and configure the FastAPI application.
@@ -97,7 +132,6 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # ── CORS ────────────────────────────────────────────────────────────────
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_origins_list,
@@ -106,7 +140,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # ── Global exception handler ─────────────────────────────────────────────
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """
@@ -123,7 +156,6 @@ def create_app() -> FastAPI:
             },
         )
 
-    # ── Routers ──────────────────────────────────────────────────────────────
     app.include_router(health_router)
     app.include_router(books_router)
     app.include_router(delivery_reports_router)
@@ -143,9 +175,7 @@ def create_app() -> FastAPI:
     app.include_router(chapter_generation_router)
     app.include_router(chapter_self_healing_router)
     app.include_router(memory_extraction_router)
-    app.include_router(backend_qa_router)
 
-    # ── Static Files & Frontend ──────────────────────────────────────────────
     static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
     if os.path.exists(static_dir):
         app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -164,16 +194,7 @@ def create_app() -> FastAPI:
 
 
 
-    # ── Admin Dashboard ──────────────────────────────────────────────────────
-    try:
-        from app.admin import setup_admin
-        setup_admin(app)
-    except ImportError:
-        logger.warning("sqladmin not installed, admin dashboard disabled")
-
     return app
 
 
-# ── Module-level app instance (used by uvicorn) ───────────────────────────────
-# `uvicorn app.main:app` picks this up.
 app = create_app()

@@ -199,6 +199,77 @@
 </div>
 </section>
 
+<!-- Agent Progress Section (Hidden by default) -->
+<section id="agent-progress-section" class="hidden mb-xl">
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg writing-canvas-shadow">
+        <div class="flex justify-between items-center mb-md border-b border-outline-variant pb-xs">
+            <div class="flex items-center gap-xs">
+                <span class="material-symbols-outlined text-primary animate-pulse" data-icon="settings_suggest">settings_suggest</span>
+                <h3 class="font-headline-md text-headline-md text-on-surface">Active Generation Pipeline</h3>
+            </div>
+            <span id="pipeline-overall-status" class="bg-primary/10 text-primary px-sm py-[2px] rounded-full font-label-sm text-label-sm font-semibold">Initializing...</span>
+        </div>
+
+        <!-- Steps Indicator -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-sm mb-lg">
+            <!-- Planner -->
+            <div id="step-planner" class="flex flex-col items-center p-sm rounded-lg border border-outline-variant bg-surface transition-all duration-300">
+                <div class="step-icon-container w-10 h-10 rounded-full flex items-center justify-center bg-outline-variant/30 text-on-surface-variant mb-xs">
+                    <span class="material-symbols-outlined" data-icon="schema">schema</span>
+                </div>
+                <p class="font-label-md text-label-md font-semibold text-on-surface">Planner</p>
+                <p class="step-status-text font-label-sm text-label-sm text-on-surface-variant">Pending</p>
+            </div>
+
+            <!-- Researcher -->
+            <div id="step-researcher" class="flex flex-col items-center p-sm rounded-lg border border-outline-variant bg-surface transition-all duration-300">
+                <div class="step-icon-container w-10 h-10 rounded-full flex items-center justify-center bg-outline-variant/30 text-on-surface-variant mb-xs">
+                    <span class="material-symbols-outlined" data-icon="search">search</span>
+                </div>
+                <p class="font-label-md text-label-md font-semibold text-on-surface">Researcher</p>
+                <p class="step-status-text font-label-sm text-label-sm text-on-surface-variant">Pending</p>
+            </div>
+
+            <!-- Writer -->
+            <div id="step-writer" class="flex flex-col items-center p-sm rounded-lg border border-outline-variant bg-surface transition-all duration-300">
+                <div class="step-icon-container w-10 h-10 rounded-full flex items-center justify-center bg-outline-variant/30 text-on-surface-variant mb-xs">
+                    <span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+                </div>
+                <p class="font-label-md text-label-md font-semibold text-on-surface">Writer</p>
+                <p class="step-status-text font-label-sm text-label-sm text-on-surface-variant">Pending</p>
+            </div>
+
+            <!-- Editor -->
+            <div id="step-editor" class="flex flex-col items-center p-sm rounded-lg border border-outline-variant bg-surface transition-all duration-300">
+                <div class="step-icon-container w-10 h-10 rounded-full flex items-center justify-center bg-outline-variant/30 text-on-surface-variant mb-xs">
+                    <span class="material-symbols-outlined" data-icon="rate_review">rate_review</span>
+                </div>
+                <p class="font-label-md text-label-md font-semibold text-on-surface">Editor</p>
+                <p class="step-status-text font-label-sm text-label-sm text-on-surface-variant">Pending</p>
+            </div>
+
+            <!-- Fact Checker -->
+            <div id="step-fact_checker" class="flex flex-col items-center p-sm rounded-lg border border-outline-variant bg-surface transition-all duration-300">
+                <div class="step-icon-container w-10 h-10 rounded-full flex items-center justify-center bg-outline-variant/30 text-on-surface-variant mb-xs">
+                    <span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+                </div>
+                <p class="font-label-md text-label-md font-semibold text-on-surface">Fact Checker</p>
+                <p class="step-status-text font-label-sm text-label-sm text-on-surface-variant">Pending</p>
+            </div>
+        </div>
+
+        <!-- Live Terminal / Logs -->
+        <div class="space-y-xs">
+            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[16px]" data-icon="terminal">terminal</span> Live Pipeline Logs
+            </label>
+            <div id="pipeline-logs" class="w-full h-[220px] overflow-y-auto p-sm bg-stone-900 text-stone-100 rounded-lg font-mono text-[13px] leading-relaxed border border-stone-800 shadow-inner">
+                <div class="text-stone-500">Pipeline idle. Click "Generate Book" to start execution...</div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Recent Books Section -->
 <section>
 <div class="flex justify-between items-center mb-md">
@@ -449,36 +520,354 @@
             }
         }
 
-        // Connect Form to Backend API
+        // Helper to update the visual state of a pipeline step card
+        function updateStepState(stepId, state, message = '') {
+            const el = document.getElementById(`step-${stepId}`);
+            if (!el) return;
+            
+            const iconContainer = el.querySelector('.step-icon-container');
+            const statusText = el.querySelector('.step-status-text');
+            
+            // Reset classes
+            el.className = "flex flex-col items-center p-sm rounded-lg border transition-all duration-300 ";
+            iconContainer.className = "step-icon-container w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 mb-xs ";
+            statusText.className = "step-status-text font-label-sm text-label-sm ";
+            
+            if (state === 'pending') {
+                el.classList.add('bg-surface', 'border-outline-variant');
+                iconContainer.classList.add('bg-outline-variant/30', 'text-on-surface-variant');
+                statusText.classList.add('text-on-surface-variant');
+                statusText.innerText = 'Pending';
+            } else if (state === 'active') {
+                el.classList.add('bg-indigo-50/50', 'border-primary', 'ring-2', 'ring-primary/20', 'shadow-md', 'shadow-primary/5');
+                iconContainer.classList.add('bg-primary', 'text-on-primary', 'animate-pulse');
+                statusText.classList.add('text-primary', 'font-semibold');
+                statusText.innerText = message || 'Executing...';
+            } else if (state === 'completed') {
+                el.classList.add('bg-emerald-50/50', 'border-emerald-500', 'shadow-sm');
+                iconContainer.classList.add('bg-emerald-500', 'text-white');
+                statusText.classList.add('text-emerald-700', 'font-semibold');
+                statusText.innerText = 'Completed';
+            } else if (state === 'failed') {
+                el.classList.add('bg-error-container/20', 'border-error');
+                iconContainer.classList.add('bg-error', 'text-white');
+                statusText.classList.add('text-error', 'font-semibold');
+                statusText.innerText = message || 'Failed';
+            }
+        }
+
+        // Helper to append logs to the live terminal console
+        function logToTerminal(message, type = 'info') {
+            const logsDiv = document.getElementById('pipeline-logs');
+            if (!logsDiv) return;
+            
+            if (logsDiv.innerHTML.includes('Pipeline idle')) {
+                logsDiv.innerHTML = '';
+            }
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const logItem = document.createElement('div');
+            logItem.className = 'mb-1';
+            
+            let colorClass = 'text-stone-300';
+            if (type === 'planner') colorClass = 'text-indigo-400';
+            else if (type === 'researcher') colorClass = 'text-cyan-400';
+            else if (type === 'writer') colorClass = 'text-amber-400';
+            else if (type === 'editor') colorClass = 'text-pink-400';
+            else if (type === 'fact_checker') colorClass = 'text-emerald-400';
+            else if (type === 'error') colorClass = 'text-red-400 font-semibold';
+            else if (type === 'system') colorClass = 'text-stone-400 font-semibold';
+            
+            const formattedMsg = message.replace(/\n/g, '<br/>');
+            logItem.innerHTML = `<span class="text-stone-500">[${timestamp}]</span> <span class="${colorClass}">${formattedMsg}</span>`;
+            logsDiv.appendChild(logItem);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // Connect Form to Backend API with sequential multi-agent execution
         document.getElementById('generate-btn').addEventListener('click', async () => {
-            const payload = {
-                topic: document.getElementById('topic-input').value || "The Future of Quantum Computing",
-                genre: document.getElementById('genre-input').value || "Non-fiction",
-                reader_profile: document.getElementById('reader-profile-input').value || "Tech-savvy professionals",
-                tone: document.getElementById('tonality-input').value,
-                target_chapters: parseInt(document.getElementById('chapters-input').value, 10),
-                words_per_chapter: parseInt(document.getElementById('words-input').value, 10)
-            };
+            const topic = document.getElementById('topic-input').value || "The Future of Quantum Computing";
+            const genre = document.getElementById('genre-input').value || "Non-fiction";
+            const reader_profile = document.getElementById('reader-profile-input').value || "Tech-savvy professionals";
+            const tone = document.getElementById('tonality-input').value;
+            const target_chapters = parseInt(document.getElementById('chapters-input').value, 10) || 1;
+            const words_per_chapter = parseInt(document.getElementById('words-input').value, 10) || 1000;
+
+            const payload = { topic, genre, reader_profile, tone, target_chapters, words_per_chapter };
 
             const btn = document.getElementById('generate-btn');
             btn.innerHTML = '<span class="material-symbols-outlined animate-spin" data-icon="sync">sync</span> Generating...';
             btn.disabled = true;
 
+            const progressSection = document.getElementById('agent-progress-section');
+            const overallStatus = document.getElementById('pipeline-overall-status');
+            const logsDiv = document.getElementById('pipeline-logs');
+
+            // Reset UI states
+            progressSection.classList.remove('hidden');
+            progressSection.scrollIntoView({ behavior: 'smooth' });
+            
+            updateStepState('planner', 'pending');
+            updateStepState('researcher', 'pending');
+            updateStepState('writer', 'pending');
+            updateStepState('editor', 'pending');
+            updateStepState('fact_checker', 'pending');
+            
+            logsDiv.innerHTML = '';
+            overallStatus.innerText = 'Initializing...';
+            overallStatus.className = 'bg-primary/10 text-primary px-sm py-[2px] rounded-full font-label-sm text-label-sm font-semibold animate-pulse';
+
+            let bookId = null;
+            let chapterId = null;
+            let plannerContent = '';
+            let researcherContent = '';
+            let writerContent = '';
+            let editorContent = '';
+
             try {
-                const res = await fetch('/api/books', {
+                // 1. Create Book Project
+                logToTerminal('Creating book project record in database...', 'system');
+                const bookRes = await fetch('/api/books', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const data = await res.json();
-                if (res.ok) {
-                    alert("Book project created successfully! ID: " + data.id);
-                    loadManuscripts(); // Reload the list
-                } else {
-                    alert("Error creating book: " + JSON.stringify(data));
+                const bookData = await bookRes.json();
+                if (!bookRes.ok) {
+                    throw new Error(bookData.detail?.message || "Failed to create book project");
                 }
+                bookId = bookData.id;
+                logToTerminal(`Book project created successfully with ID: ${bookId}`, 'system');
+
+                // Update Book status to planning
+                await fetch(`/api/books/${bookId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'planning' })
+                });
+
+                // 2. Planner Agent
+                overallStatus.innerText = 'Planner Running';
+                updateStepState('planner', 'active');
+                logToTerminal('Invoking Planner Agent to draft outline and chapter list...', 'planner');
+
+                const plannerRes = await fetch('/api/agents/dev-run-real', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent_name: 'planner',
+                        task: `Create a concise 3-chapter book outline for the following:\nTopic: ${topic}\nGenre: ${genre}\nReader profile: ${reader_profile}\nTone: ${tone}\nOutput the outline in structured form with chapter titles and brief descriptions.`,
+                        book_id: bookId
+                    })
+                });
+                const plannerData = await plannerRes.json();
+                if (!plannerRes.ok) {
+                    updateStepState('planner', 'failed');
+                    throw new Error(plannerData.detail?.message || "Planner Agent failed");
+                }
+                plannerContent = plannerData.content || '';
+                logToTerminal(`Planner completed. Outline generated:\n${plannerContent}`, 'planner');
+                updateStepState('planner', 'completed');
+
+                // Create Chapter
+                logToTerminal('Creating Chapter 1 record in database...', 'system');
+                const chapterRes = await fetch(`/api/books/${bookId}/chapters`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        book_id: bookId,
+                        chapter_number: 1,
+                        title: `Chapter 1: Introduction to ${topic}`,
+                        summary: plannerContent.substring(0, 1000),
+                        tone: tone,
+                        status: 'planned'
+                    })
+                });
+                const chapterData = await chapterRes.json();
+                if (!chapterRes.ok) {
+                    throw new Error(chapterData.detail?.message || "Failed to create chapter");
+                }
+                chapterId = chapterData.id;
+                logToTerminal(`Chapter 1 record created with ID: ${chapterId}`, 'system');
+
+                // Update Book status to generating
+                await fetch(`/api/books/${bookId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'generating' })
+                });
+
+                // 3. Researcher Agent
+                overallStatus.innerText = 'Researcher Running';
+                updateStepState('researcher', 'active');
+                logToTerminal('Invoking Researcher Agent to extract facts and verify context...', 'researcher');
+
+                const researcherRes = await fetch('/api/agents/dev-run-real', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent_name: 'researcher',
+                        task: `Summarize and extract key evidence from the following context for a book outline.\nBook Outline:\n${plannerContent}\n\nAvailable Context:\nNo context provided.\n\nList the key facts, citations, and relevant evidence that support the planned chapters.`,
+                        context_pack: { context_text: `Topic: ${topic}. Genre: ${genre}.` },
+                        book_id: bookId,
+                        chapter_id: chapterId
+                    })
+                });
+                const researcherData = await researcherRes.json();
+                if (!researcherRes.ok) {
+                    updateStepState('researcher', 'failed');
+                    throw new Error(researcherData.detail?.message || "Researcher Agent failed");
+                }
+                researcherContent = researcherData.content || '';
+                logToTerminal(`Researcher completed. Key findings extracted:\n${researcherContent}`, 'researcher');
+                updateStepState('researcher', 'completed');
+
+                // 4. Writer Agent
+                overallStatus.innerText = 'Writer Running';
+                updateStepState('writer', 'active');
+                logToTerminal('Invoking Writer Agent to draft introduction prose paragraphs...', 'writer');
+
+                const writerRes = await fetch('/api/agents/dev-run-real', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent_name: 'writer',
+                        task: `Write a short draft introduction section (2-3 paragraphs) based on:\nOutline:\n${plannerContent}\n\nResearch:\n${researcherContent}\n\nTone: ${tone}\nTarget reader: ${reader_profile}\nKeep it concise and engaging. Do not write the full book.`,
+                        book_id: bookId,
+                        chapter_id: chapterId
+                    })
+                });
+                const writerData = await writerRes.json();
+                if (!writerRes.ok) {
+                    updateStepState('writer', 'failed');
+                    throw new Error(writerData.detail?.message || "Writer Agent failed");
+                }
+                writerContent = writerData.content || '';
+                logToTerminal(`Writer completed. Drafted prose:\n${writerContent}`, 'writer');
+
+                // Update Chapter status/draft
+                logToTerminal('Saving draft text to Chapter 1 record...', 'system');
+                await fetch(`/api/books/${bookId}/chapters/${chapterId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        draft_text: writerContent,
+                        status: 'drafting'
+                    })
+                });
+                updateStepState('writer', 'completed');
+
+                // 5. Editor Agent
+                overallStatus.innerText = 'Editor Running';
+                updateStepState('editor', 'active');
+                logToTerminal('Invoking Editor Agent to refine clarity and flow...', 'editor');
+
+                const editorRes = await fetch('/api/agents/dev-run-real', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent_name: 'editor',
+                        task: `Edit the following draft for clarity, structure, and flow:\n\n${writerContent}\n\nImprove transitions, remove redundancies, and ensure consistent tone. Do not add new facts or change the core meaning.`,
+                        book_id: bookId,
+                        chapter_id: chapterId
+                    })
+                });
+                const editorData = await editorRes.json();
+                if (!editorRes.ok) {
+                    updateStepState('editor', 'failed');
+                    throw new Error(editorData.detail?.message || "Editor Agent failed");
+                }
+                editorContent = editorData.content || '';
+                logToTerminal(`Editor completed. Edited text:\n${editorContent}`, 'editor');
+
+                // Update Chapter status/edited
+                logToTerminal('Saving edited text to Chapter 1 record...', 'system');
+                await fetch(`/api/books/${bookId}/chapters/${chapterId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        edited_text: editorContent,
+                        status: 'editing'
+                    })
+                });
+                updateStepState('editor', 'completed');
+
+                // 6. Fact Checker Agent
+                overallStatus.innerText = 'Fact Checking';
+                updateStepState('fact_checker', 'active');
+                logToTerminal('Invoking Fact Checker Agent to cross-verify claims against citations...', 'fact_checker');
+
+                const factRes = await fetch('/api/agents/dev-run-real', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent_name: 'fact_checker',
+                        task: `Fact-check the following edited text against the available context and citations:\n\nEdited Text:\n${editorContent}\n\nContext:\nNo context provided.\n\nCitations: []\n\nList any factual claims that cannot be verified. If everything checks out, confirm the text is consistent with the sources.`,
+                        book_id: bookId,
+                        chapter_id: chapterId
+                    })
+                });
+                const factData = await factRes.json();
+                if (!factRes.ok) {
+                    updateStepState('fact_checker', 'failed');
+                    throw new Error(factData.detail?.message || "Fact Checker Agent failed");
+                }
+                const factContent = factData.content || '';
+                logToTerminal(`Fact Checker completed. Verification report:\n${factContent}`, 'fact_checker');
+
+                // Finalize Chapter and Book
+                logToTerminal('Finalizing book and chapter records...', 'system');
+                await fetch(`/api/books/${bookId}/chapters/${chapterId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        final_text: editorContent,
+                        status: 'completed'
+                    })
+                });
+                
+                await fetch(`/api/books/${bookId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'completed' })
+                });
+                
+                updateStepState('fact_checker', 'completed');
+                overallStatus.innerText = 'Completed';
+                overallStatus.className = 'bg-emerald-100 text-emerald-800 px-sm py-[2px] rounded-full font-label-sm text-label-sm font-semibold';
+                logToTerminal('Pipeline execution finished successfully!', 'system');
+
+                alert("Book project generated successfully with all agents completing the draft!");
+                
+                setTimeout(() => {
+                    progressSection.classList.add('hidden');
+                }, 4000);
+
+                loadManuscripts();
             } catch (err) {
-                alert("Connection error: " + err);
+                logToTerminal(`Pipeline failed: ${err.message}`, 'error');
+                overallStatus.innerText = 'Failed';
+                overallStatus.className = 'bg-red-100 text-red-800 px-sm py-[2px] rounded-full font-label-sm text-label-sm font-semibold';
+                
+                // Set book status to failed if it was created
+                if (bookId) {
+                    await fetch(`/api/books/${bookId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'failed' })
+                    }).catch(e => console.error("Failed to mark book failed", e));
+                    
+                    if (chapterId) {
+                        await fetch(`/api/books/${bookId}/chapters/${chapterId}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'failed' })
+                        }).catch(e => console.error("Failed to mark chapter failed", e));
+                    }
+                }
+                
+                alert("Connection/generation error: " + err.message);
+                loadManuscripts();
             } finally {
                 btn.innerHTML = '<span class="material-symbols-outlined" data-icon="bolt">bolt</span> Generate Book';
                 btn.disabled = false;

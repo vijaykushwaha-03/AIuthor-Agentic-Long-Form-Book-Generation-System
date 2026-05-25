@@ -82,12 +82,11 @@ class Settings(BaseSettings):
         default="gpt-4o-mini",
         description="OpenAI model name (e.g. gpt-4o-mini, gpt-4o).",
     )
-
-    # OpenRouter
-    OPENROUTER_API_KEY: str = Field(default="", description="OpenRouter API key.")
-    OPENROUTER_MODEL: str = Field(
-        default="meta-llama/llama-3.3-70b-instruct:free",
-        description="OpenRouter model name.",
+    # NVIDIA AI Endpoints
+    NVIDIA_API_KEY: str = Field(default="", description="NVIDIA NIM API key.")
+    NVIDIA_MODEL: str = Field(
+        default="meta/llama-3.3-70b-instruct",
+        description="NVIDIA NIM model name (e.g. meta/llama-3.3-70b-instruct).",
     )
 
     # Shared tunables
@@ -135,7 +134,7 @@ class Settings(BaseSettings):
     @field_validator("LLM_PROVIDER")
     @classmethod
     def validate_llm_provider(cls, v: str) -> str:
-        valid = {"gemini", "openai", "mock", "openrouter"}
+        valid = {"gemini", "openai", "mock", "nvidia"}
         lower = v.lower()
         if lower not in valid:
             raise ValueError(f"LLM_PROVIDER must be one of {valid}, got '{v}'")

@@ -39,7 +39,6 @@ from app.services.document_export_service import DocumentExportService
 from app.services.prompt_dossier_service import PromptDossierService
 from app.services.evaluation_report_service import EvaluationReportService
 from app.services.delivery_bundle_service import DeliveryBundleService
-from app.services.backend_readiness_service import BackendReadinessService
 
 __all__ = [
     "ServiceError",
@@ -75,7 +74,6 @@ __all__ = [
     "PromptDossierService",
     "EvaluationReportService",
     "DeliveryBundleService",
-    "BackendReadinessService",
 ]
 
 

@@ -224,6 +224,7 @@ class WorkflowExecutionService:
                         total_tokens=step["total_tokens"],
                         error_message=step["error_message"],
                         content_preview=step["content"][:1000] if step["content"] else None,
+                        content=step["content"],
                         metadata=step["metadata"],
                     )
                 )

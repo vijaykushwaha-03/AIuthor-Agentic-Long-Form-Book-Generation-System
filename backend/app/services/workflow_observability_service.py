@@ -152,6 +152,7 @@ class WorkflowObservabilityService:
             total_tokens=total_tokens,
             error_message=error_message,
             content_preview=output_content[:1000] if output_content else None,
+            content=output_content,
             metadata=step_metadata,
         )
 

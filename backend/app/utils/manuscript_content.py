@@ -1,4 +1,4 @@
-﻿"""
+"""
 AIuthor Backend — Manuscript Content Cleaning Utilities.
 
 Provides functions to strip code fences, parse JSON, validate against debug/mock output,
@@ -145,25 +145,23 @@ def extract_chapter_content_from_json(
     """
     Extracts chapter content from parsed JSON data.
     Supports list of chapters (matching by chapter_number or title, falling back to first),
-    direct dict content/text field, and nested chapter.content.
+    direct dict content/text/body/etc. fields, and nested chapter.content.
     """
     if not data:
         return None
         
     if isinstance(data, dict):
-        # Case: {"chapter": {"content": "..."}}
+        # Case: {"chapter": {"content": "..."}} or other priority fields
         if "chapter" in data and isinstance(data["chapter"], dict):
             ch_data = data["chapter"]
-            if "content" in ch_data:
-                return ch_data["content"]
-            if "text" in ch_data:
-                return ch_data["text"]
+            for key in _PROSE_FIELD_PRIORITY:
+                if key in ch_data and not isinstance(ch_data[key], (dict, list)):
+                    return str(ch_data[key])
                 
-        # Case: {"content": "..."}
-        if "content" in data and not isinstance(data["content"], (dict, list)):
-            return str(data["content"])
-        if "text" in data and not isinstance(data["text"], (dict, list)):
-            return str(data["text"])
+        # Case: priority keys directly in data (e.g. {"body": "..."} or {"content": "..."})
+        for key in _PROSE_FIELD_PRIORITY:
+            if key in data and not isinstance(data[key], (dict, list)):
+                return str(data[key])
             
         # Case: {"chapters": [...]}
         chapters = data.get("chapters")
@@ -233,6 +231,9 @@ def extract_chapter_content_from_json(
             matched_chapter = chapters[0]
             
         if isinstance(matched_chapter, dict):
+            for key in _PROSE_FIELD_PRIORITY:
+                if key in matched_chapter and not isinstance(matched_chapter[key], (dict, list)):
+                    return str(matched_chapter[key])
             if "content" in matched_chapter:
                 return matched_chapter["content"]
             if "text" in matched_chapter:
